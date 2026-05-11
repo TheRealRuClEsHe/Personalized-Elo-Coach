@@ -1,0 +1,7 @@
+DEBUG:matplotlib:matplotlib data path: C:\Users\liher\Personalized-Elo-Coach\venv\Lib\site-packages\matplotlib\mpl-data
+DEBUG:matplotlib:CONFIGDIR=C:\Users\liher\.matplotlib
+DEBUG:matplotlib:interactive is False
+DEBUG:matplotlib:platform is win32
+DEBUG:matplotlib:CACHEDIR=C:\Users\liher\.matplotlib
+DEBUG:matplotlib.font_manager:font search path [WindowsPath('C:/Users/liher/Personalized-Elo-Coach/venv/Lib/site-packages/matplotlib/mpl-data/fonts/ttf'), WindowsPath('C:/Users/liher/Personalized-Elo-Coach/venv/Lib/site-packages/matplotlib/mpl-data/fonts/afm'), WindowsPath('C:/Users/liher/Personalized-Elo-Coach/venv/Lib/site-packages/matplotlib/mpl-data/fonts/pdfcorefonts')]
+INFO:matplotlib.font_manager:generated new fontManager

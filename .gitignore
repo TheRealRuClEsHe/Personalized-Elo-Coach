@@ -1,0 +1,8 @@
+venv/
+data/bulk_replays/
+data/parsed_replays.csv
+data/cleaned_replays.csv
+__pycache__/
+*.pyc
+.env
+models/*.pkl
