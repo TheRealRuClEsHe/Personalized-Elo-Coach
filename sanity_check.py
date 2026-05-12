@@ -1,5 +1,5 @@
 try:
-    from agealyser import AgeGame
+    from mgz.fast import header as fast_header, operation, Operation, Action, meta
     import pandas as pd
     import numpy as np
     import xgboost
