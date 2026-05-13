@@ -1,0 +1,34 @@
+# Project Issues Log
+
+Format for each entry:
+- **ID**: ISSUE-001
+- **Date**: YYYY-MM-DD
+- **Problem**: What broke / what was the symptom
+- **Proposed fix**: What we tried
+- **Method**: Commands, code changes, configs applied
+- **Result**: Worked / partially worked / failed + why
+- **Tags**: #python #data #pipeline etc.
+
+---
+
+## ISSUE-001
+- **ID**: ISSUE-001
+- **Date**: 2026-05-13
+- **Problem**: Bulk parsing 3627 `.aoe2record` files estimated to take 23+ hours. Single file body scan takes ~23s due to pure Python loop over tens of thousands of SYNC operations. Full parse on every file before applying any filters wasted time on team games and non-Arabia replays.
+- **Proposed fix**: Two-stage optimization — (1) header-first filtering to skip body scan on files that fail map/rated/num_players filter; (2) multiprocessing for body scans on remaining ~300 qualifying files.
+- **Method**: Split `parse_replay()` into `parse_header(f)` and `parse_body(f)`. Header parse measured at 0.06s avg / 0.23s max across 20 files. Body scan still ~23s per qualifying game. Multiprocessing across 12 cores (user's machine) pending implementation.
+- **Result**: RESOLVED — `ProcessPoolExecutor` crashed on Windows/Jupyter (`OSError: handle is closed`, no `__main__` guard). Switched to `ThreadPoolExecutor` which works in Jupyter. Phase 1 (header scan): 1377.9s. Phase 2 (body scan, 12 threads): 66.8s — 12x speedup confirmed. Total: 24 min. 194 games kept, 0 body errors. Results cached to `data/parsed_replays.csv` — one-time cost.
+- **Tags**: #performance #parsing #multiprocessing #pipeline #windows
+
+---
+
+## ISSUE-002
+- **ID**: ISSUE-002
+- **Date**: 2026-05-13
+- **Problem**: `ProcessPoolExecutor` crashes in Jupyter on Windows with `OSError: handle is closed`. Windows requires a `if __name__ == '__main__':` guard when spawning new processes, which Jupyter notebooks cannot provide.
+- **Proposed fix**: Replace `ProcessPoolExecutor` with `ThreadPoolExecutor`.
+- **Method**: One-line swap in `cell-bulk-parse`. Threads share the same process so no `__main__` guard needed. File I/O and zlib decompression release Python's GIL so threads give real speedup despite the GIL.
+- **Result**: RESOLVED — body scan dropped from ~115 min sequential to 66.8s with 12 threads.
+- **Tags**: #windows #multiprocessing #jupyter #GIL
+
+---
