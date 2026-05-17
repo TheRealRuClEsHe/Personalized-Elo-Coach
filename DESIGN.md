@@ -57,3 +57,23 @@ Format for each entry:
 - **Rationale**: These fields were used as filters in the bulk parser but not included in `scan_body()` return dict. All 194 games passed those filters so values are known constants (Arabia=9, rated=True, num_players=2).
 - **Alternatives considered**: Re-run bulk parse with these fields included — rejected, not worth 24 min re-parse for fields with no variance
 - **Impact**: These columns added back with constant values in `03_feature_engineering.ipynb`
+
+---
+
+## DEC-006
+- **ID**: DEC-006
+- **Date**: 2026-05-17
+- **Decision**: Missing Elo filter applied in `03_feature_engineering.ipynb`, not in the bulk parser
+- **Rationale**: Notebook 02 filters determine *which games are worth parsing* (map, rated, 1v1, duration — checked before or during body scan). Notebook 03 filters determine *which parsed rows are usable as training data*. Missing Elo is a post-parse quality check — the game was valid and parsed, but the POSTGAME block yielded no rating. Same category as the null `resign_player` drop already in Section 2 of notebook 03.
+- **Alternatives considered**: Add missing Elo check to bulk parser Phase 3 — rejected, the bulk parser took 24 minutes and re-running it to filter 2 rows is not worth it.
+- **Impact**: 2 rows dropped in notebook 03 Section 2, alongside the null `resign_player` drop.
+
+---
+
+## DEC-007
+- **ID**: DEC-007
+- **Date**: 2026-05-17
+- **Decision**: Fix Elo mis-assignment in `match_ratings()` using a slot offset (`pnum - 1`) rather than keying by `profile_id`
+- **Rationale**: POSTGAME leaderboard entries use 0-indexed player numbers (0, 1) while header `de_players` uses 1-indexed numbers (1, 2). The original elimination approach incorrectly matched POSTGAME key `1` to header player `1`, swapping both Elos every game. The POSTGAME payload contains no `profile_id` field, so direct profile-based matching is not possible without a re-parse. The offset `lb.get(pnum - 1)` is structurally consistent — verified against raw replay data for `AgeIIDE_Replay_322460723.aoe2record` (POSTGAME key 1 = header player 2 = TheRealRuClEsHe).
+- **Alternatives considered**: Key `leaderboard_ratings` by `profile_id` in the bulk parser and re-parse — rejected because POSTGAME entries lack `profile_id`; a re-parse would not solve the ambiguity. Keep elimination approach — rejected, it systematically swaps Elos in every game (ISSUE-003).
+- **Impact**: `match_ratings()` in `03_feature_engineering.ipynb` (cell `9f98dd05`) replaced with `{pnum: lb.get(pnum - 1) for pnum in player_nums}`. No re-parse needed. Logged as ISSUE-003.

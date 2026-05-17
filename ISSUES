@@ -32,3 +32,12 @@ Format for each entry:
 - **Tags**: #windows #multiprocessing #jupyter #GIL
 
 ---
+
+## ISSUE-003
+- **ID**: ISSUE-003
+- **Date**: 2026-05-17
+- **Problem**: `match_ratings()` in `03_feature_engineering.ipynb` silently swapped Elos between players. POSTGAME leaderboard uses 0-indexed player numbers (0, 1) while header `de_players` uses 1-indexed player numbers (1, 2). The function's direct-match step found POSTGAME key `1` when looking up header player `1`, assigning the wrong player's rating. E.g. TheRealRuClEsHe (header player 2, POSTGAME key 1) received rating 1665 instead of 1715 in the first cross-checked game.
+- **Proposed fix**: Replace the direct-match-then-elimination logic with a single offset lookup: `lb.get(pnum - 1)` for each header player number.
+- **Method**: Edited cell `9f98dd05` in `03_feature_engineering.ipynb`. Replaced 10-line elimination function with one-liner `{pnum: lb.get(pnum - 1) for pnum in player_nums}`.
+- **Result**: RESOLVED — re-run cell assigns correct Elos. Verify: `df_players[df_players['is_me']]['elo'].describe()` should now reflect TheRealRuClEsHe's actual ratings, not opponents'.
+- **Tags**: #data #feature-engineering #elo #bug
