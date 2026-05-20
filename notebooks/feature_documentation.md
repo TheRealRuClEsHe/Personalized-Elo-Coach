@@ -42,13 +42,13 @@
 |---|---|---|---|---|---|
 | feudal_min | float | When player clicked up to Feudal Age | 8–30 min | Yes | Lower = faster = generally better. Core coaching signal. |
 | castle_min | float | When player clicked up to Castle Age | 14–40 min | Yes | Measures mid-game transition speed. |
-| imperial_min | float | When player clicked up to Imperial Age | 22–60 min | Maybe | ~50% null — many games end before Imperial. Impute with duration_min. |
+| imperial_min | float | When player clicked up to Imperial Age | 22–60 min | Maybe | ~50% null — many games end before Imperial. |
 
 ---
 
 ## Eco Tech Timings
 
-All nulls = player never researched this tech during the game. Impute with `duration_min` (encodes "researched at end or not at all").
+All nulls = player never researched this tech during the game, kept as null. i.e. player never researched this tech.
 
 | field_name | data_type | aoe2_meaning | expected_range | keep_for_model | notes |
 |---|---|---|---|---|---|
