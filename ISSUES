@@ -67,3 +67,14 @@ Format for each entry:
 - **Method**: Changed `MY_PLAYER_NAME` from a single string to a set containing both the raw string and the bytestring repr: `MY_PLAYER_NAME = {'TheRealRuClEsHe', "b'TheRealRuClEsHe'"}`. Updated the `is_me` check to use `in` instead of `==`.
 - **Result**: RESOLVED — implemented by user directly in notebook 02 setup cell.
 - **Tags**: #data #parsing #player-name #bytes #feature-engineering
+
+---
+
+## ISSUE-006
+- **ID**: ISSUE-006
+- **Date**: 2026-05-20
+- **Problem**: Both models in `05_modeling.ipynb` scored below the AUC < 0.60 stop threshold (LR: 0.5722, XGBoost: 0.5396 — effectively random). Diagnostic checklist cleared leakage (no suspect columns in X) and volume (280 training rows > 250 threshold). Root cause: the feature matrix is built from individual player rows in isolation. A `feudal_min` of 8.5 minutes is a win if the opponent clicked up at 9.2 and a loss if they clicked up at 7.8. The absolute value carries no learnable signal — what determines the outcome is the relative gap between the two players. Since the model never sees both rows from the same game simultaneously, there is no pattern to learn from absolute individual stats at this Elo range (1484–1898) where both players' metrics heavily overlap.
+- **Proposed fix**: Restructure `features.csv` from two rows per game (one per player) to one row per game using within-game deltas. For each game, pair the two player rows, compute `my_stat - opponent_stat` for every feature, and use `did_i_win` as the label. This gives the model a learnable signal: "when your feudal time is 45 seconds faster than your opponent's, you tend to win." Add a restructuring cell to `03_feature_engineering.ipynb` that reads `parsed_replays.csv`, pairs rows by game, computes deltas, and saves `data/features_delta.csv`. Retrain both models on the new format.
+- **Method**: Added Section 5 and 6 to `03_feature_engineering.ipynb`. For each game grouped by `filepath`, paired player_num=1 and player_num=2 rows, computed `p1_stat - p2_stat` for all numeric feature columns, kept `result = int(p1_result)` as label. Saved output to `data/features_delta.csv` (one row per game). Updated `04_eda.ipynb` to read `features_delta.csv` for distribution plots, heatmap (top 25 by Cohen's d), and effect size ranking. Updated `05_modeling.ipynb` to train LR + XGBoost on delta columns only. Fixed `np.percentile` crash on all-NaN columns with empty-array guard.
+- **Result**: RESOLVED — XGBoost AUC jumped from 0.5396 to **0.753** with delta features. LR remained near-random (0.510), confirming the signal is non-linear. Model saved to `models/elocoach_model.pkl`. Cohort distributions saved to `models/cohort_distributions.pkl`. SHAP analysis and coaching recommendations implemented in `06_shap_analysis.ipynb`.
+- **Tags**: #modeling #feature-engineering #data-structure #auc #diagnosis #resolved
