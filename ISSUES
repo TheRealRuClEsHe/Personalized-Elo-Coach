@@ -39,5 +39,31 @@ Format for each entry:
 - **Problem**: `match_ratings()` in `03_feature_engineering.ipynb` silently swapped Elos between players. POSTGAME leaderboard uses 0-indexed player numbers (0, 1) while header `de_players` uses 1-indexed player numbers (1, 2). The function's direct-match step found POSTGAME key `1` when looking up header player `1`, assigning the wrong player's rating. E.g. TheRealRuClEsHe (header player 2, POSTGAME key 1) received rating 1665 instead of 1715 in the first cross-checked game.
 - **Proposed fix**: Replace the direct-match-then-elimination logic with a single offset lookup: `lb.get(pnum - 1)` for each header player number.
 - **Method**: Edited cell `9f98dd05` in `03_feature_engineering.ipynb`. Replaced 10-line elimination function with one-liner `{pnum: lb.get(pnum - 1) for pnum in player_nums}`.
-- **Result**: RESOLVED — re-run cell assigns correct Elos. Verify: `df_players[df_players['is_me']]['elo'].describe()` should now reflect TheRealRuClEsHe's actual ratings, not opponents'.
+- **Result**: RESOLVED — confirmed correct. POSTGAME leaderboard uses 0-indexed 
+  numbers (0, 1); header players use 1-indexed (1, 2). `lb.get(pnum - 1)` correctly 
+  maps header player 1 → POSTGAME number 0, header player 2 → POSTGAME number 1. 
+  Verified by inspecting raw POSTGAME block: `{'number': 0, 'rating': 1893}, 
+  {'number': 1, 'rating': 1895}`.
 - **Tags**: #data #feature-engineering #elo #bug
+
+---
+
+## ISSUE-004
+- **ID**: ISSUE-004
+- **Date**: 2026-05-19
+- **Problem**: `wall_count` is 0 for all 377 rows, `market_count` is 0 for all rows, and `first_wall_min` is 100% null in `parsed_replays.csv`. BUILD action tracking for WALL_IDS `{72, 117, 155}` and market building ID `137` never fires. All other tracked buildings (barracks=12, archery=87, stable=101, blacksmith=103) show realistic non-zero values, confirming the BUILD action parsing itself works — the IDs for walls and market are simply wrong or DE uses a different action type for walls.
+- **Proposed fix**: (1) Audit all unique `building_id` values that actually appear in BUILD actions across parsed replays to find the correct DE IDs. (2) Check whether DE wall placement uses a separate `WALL` action type rather than `BUILD`. (3) Correct `WALL_IDS` and market ID in `02_bulk_parsing_new.ipynb`, then re-run Phase 2 only.
+- **Method**: PENDING — need to add a BUILD action audit spike before fixing.
+- **Result**: PENDING
+- **Tags**: #data #parsing #building-ids #walls #feature-engineering
+
+---
+
+## ISSUE-005
+- **ID**: ISSUE-005
+- **Date**: 2026-05-19
+- **Problem**: `is_me` column is all `False` in `parsed_replays.csv`. `player_name` is stored as `"b'TheRealRuClEsHe'"` (Python bytes repr) instead of `"TheRealRuClEsHe"` (decoded string), so `player_name == MY_PLAYER_NAME` always evaluates to `False`.
+- **Proposed fix**: In `flatten_player_row()` in `02_bulk_parsing_new.ipynb`, decode bytes before comparison: `if isinstance(player_name, bytes): player_name = player_name.decode('utf-8', errors='replace')`.
+- **Method**: Changed `MY_PLAYER_NAME` from a single string to a set containing both the raw string and the bytestring repr: `MY_PLAYER_NAME = {'TheRealRuClEsHe', "b'TheRealRuClEsHe'"}`. Updated the `is_me` check to use `in` instead of `==`.
+- **Result**: RESOLVED — implemented by user directly in notebook 02 setup cell.
+- **Tags**: #data #parsing #player-name #bytes #feature-engineering
