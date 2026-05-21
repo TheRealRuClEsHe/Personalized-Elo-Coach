@@ -16,24 +16,10 @@ from collections import defaultdict
 
 from mgz.fast import operation, Operation, meta
 from mgz.fast.header import parse as fast_header_parse
-from mgz.util import unpack
 
 log = logging.getLogger(__name__)
-
-# -- mgz-fast compatibility patch ---------------------------------------------
-# mgz-fast 1.0.0 asserts that DE header strings start with b'\x60\x0a'.
-# Newer AoE2 DE patches changed these marker bytes, causing AssertionError
-# wrapped as RuntimeError("could not parse:").
-# Fix: skip the 2-byte marker without asserting so all patch versions work.
-def _de_string_patched(data):
-    """Read DE string -- tolerates any 2-byte marker prefix."""
-    data.read(2)  # skip marker bytes (was b'\x60\x0a', changed in newer DE patches)
-    length = unpack('<h', data)
-    return unpack(f'<{length}s', data)
-
-import mgz.fast.header as _mgz_fast_header
-_mgz_fast_header.de_string = _de_string_patched
-# -----------------------------------------------------------------------------
+# Note: mgz.fast.header is replaced with src/mgz_fast_header.py at startup
+# by app/main.py before this module is imported. See main.py for details.
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 ARABIA_MAP_ID         = 9
