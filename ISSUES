@@ -78,3 +78,13 @@ Format for each entry:
 - **Method**: Added Section 5 and 6 to `03_feature_engineering.ipynb`. For each game grouped by `filepath`, paired player_num=1 and player_num=2 rows, computed `p1_stat - p2_stat` for all numeric feature columns, kept `result = int(p1_result)` as label. Saved output to `data/features_delta.csv` (one row per game). Updated `04_eda.ipynb` to read `features_delta.csv` for distribution plots, heatmap (top 25 by Cohen's d), and effect size ranking. Updated `05_modeling.ipynb` to train LR + XGBoost on delta columns only. Fixed `np.percentile` crash on all-NaN columns with empty-array guard.
 - **Result**: RESOLVED — XGBoost AUC jumped from 0.5396 to **0.753** with delta features. LR remained near-random (0.510), confirming the signal is non-linear. Model saved to `models/elocoach_model.pkl`. Cohort distributions saved to `models/cohort_distributions.pkl`. SHAP analysis and coaching recommendations implemented in `06_shap_analysis.ipynb`.
 - **Tags**: #modeling #feature-engineering #data-structure #auc #diagnosis #resolved
+---
+
+## ISSUE-007
+- **ID**: ISSUE-007
+- **Date**: 2026-05-21
+- **Problem**: `POST /analyze` returns 422 with `ValueError: DataFrame.dtypes for data must be int, float, bool or category. Invalid columns: first_stable_min_delta: object, double_bit_axe_min_delta: object, ...` when uploading a real replay. Root cause: `build_delta_row()` returns `None` (Python None) for techs that were never researched in the game. When these are assembled into a dict and passed to `pd.DataFrame([row])`, Pandas infers object dtype for any column whose only value is `None`. XGBoost's `predict_proba` rejects object-dtype columns.
+- **Proposed fix**: In `predict_win_prob()`, replace Python `None` with `float('nan')` before constructing the DataFrame. `float('nan')` is a float, so Pandas infers float64 dtype, which XGBoost accepts. XGBoost handles NaN natively (DEC-008).
+- **Method**: Rewrote the row-building step in `src/model.py::predict_win_prob()`: `row = {col: (float(delta_dict[col]) if delta_dict.get(col) is not None else float('nan')) for col in feature_cols}`. Removed downstream `.astype(float)` call (not needed with this approach). File written via bash heredoc to avoid Windows-mount encoding corruption that caused null bytes in earlier write attempts.
+- **Result**: RESOLVED -- `predict_win_prob()` now handles all-None rows correctly. Confirmed with test: 30+ None-valued delta features, win probability returned as 0.832 without error. All 34 tests pass.
+- **Tags**: #api #fastapi #xgboost #dtype #none #nan #inference
