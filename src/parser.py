@@ -10,11 +10,14 @@ No file paths, logging config, or pandas imports here — keep this import-safe
 so the API can load it without side effects.
 """
 
+import logging
 import os
 from collections import defaultdict
 
 from mgz.fast import operation, Operation, meta
 from mgz.fast.header import parse as fast_header_parse
+
+log = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 ARABIA_MAP_ID         = 9
@@ -75,7 +78,16 @@ def parse_header(filepath):
         num_players : int   — number of human players
     """
     with open(filepath, 'rb') as f:
-        h       = fast_header_parse(f)
+        try:
+            h = fast_header_parse(f)
+        except RuntimeError:
+            import traceback
+            log.error('mgz-fast header parse failed (Linux binary incompatibility?):\n%s',
+                      traceback.format_exc())
+            raise RuntimeError(
+                'mgz-fast could not parse this replay header. '
+                'The file may use a newer patch format unsupported on Linux.'
+            )
         de      = h.get('de') or {}
         players = [p for p in (h.get('players') or []) if p and p.get('type') == 1]
         return de.get('rms_map_id'), de.get('rated', False), len(players)
@@ -106,7 +118,17 @@ def parse_replay(filepath):
     with open(filepath, 'rb') as f:
 
         # ── Header ────────────────────────────────────────────────────────────
-        h      = fast_header_parse(f)
+        try:
+            h = fast_header_parse(f)
+        except RuntimeError:
+            import traceback
+            log.error('mgz-fast header parse failed in parse_replay (Linux binary issue?):\n%s',
+                      traceback.format_exc())
+            raise RuntimeError(
+                'mgz-fast could not parse this replay header. '
+                'The file may use a newer AoE2 DE patch format unsupported on Linux. '
+                'Please try a different replay file.'
+            )
         de     = h.get('de') or {}
         map_id = de.get('rms_map_id')
         rated  = de.get('rated', False)

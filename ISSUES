@@ -94,8 +94,8 @@ Format for each entry:
 ## ISSUE-008
 - **ID**: ISSUE-008
 - **Date**: 2026-05-22
-- **Problem**: `POST /analyze` returns 422 with `RuntimeError: could not parse:` for replay file `AgeIIDE_Replay_479421981.aoe2record` (4285 KB). Error originates in mgz-fast before any project code runs, meaning the library itself cannot decompress or parse the replay header/body.
-- **Proposed fix**: Two candidates -- (1) replay is from a newer AoE2 DE patch whose format mgz-fast 1.0.0 does not support; update mgz-fast to latest version. (2) Replay is a team game (file size ~4 MB vs typical 1v1 ~1-2 MB) -- check player count in header.
-- **Method**: PENDING -- run locally: `python -c "from src.parser import parse_replay; g = parse_replay('path/to/replay'); print(list(g['player_stats'].keys()))"`. Also run `pip index versions mgz-fast` to check for newer releases. If newer version exists, update requirements.txt and redeploy.
-- **Result**: PENDING
-- **Tags**: #parsing #mgz #compatibility #production
+- **Problem**: `POST /analyze` returns 422 with `RuntimeError: could not parse:` for replay file `AgeIIDE_Replay_479421981.aoe2record` (4285 KB). Fails in 16ms on Railway (Linux), parses fine locally (Windows). Root cause narrowed down: failure is in mgz-fast's compiled C extension (`fast_header_parse`), before the body scan starts. The file IS a valid 1v1 Arabia game (confirmed by local parse: players [1,2], map_id 9). This is a Linux vs Windows binary incompatibility in mgz-fast 1.0.0 -- the .so on Linux handles this file differently than the .pyd on Windows. Python version is now confirmed to be 3.11.15 on Railway (nixpacks.toml fix worked), ruling out Python 3.13 as the cause. Pinning construct==2.8.16 also did not fix it.
+- **Proposed fix**: (1) Add full traceback logging to `run_pipeline` and `parse_header`/`parse_replay` so the exact failing line in mgz-fast is visible in Railway logs. (2) Investigate pure-mgz fallback (no C extension) or newer mgz-fast release. (3) Short-term: show user a clear error message identifying the file as unsupported format.
+- **Method**: Added `import traceback; log.error(traceback.format_exc())` to `src/model.py` exception handler and both parse functions in `src/parser.py`. Both header parse calls now wrap `fast_header_parse` in try/except RuntimeError with full traceback logging before re-raising with descriptive message. Will read Railway logs after next failed parse to get exact traceback.
+- **Result**: PENDING -- logging deployed, awaiting Railway log inspection on next failed upload.
+- **Tags**: #parsing #mgz #compatibility #production #linux #c-extension

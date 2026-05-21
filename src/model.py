@@ -9,12 +9,16 @@ Provides:
 
 from __future__ import annotations
 
+import logging
 import pickle
+import traceback
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import pandas as pd
+
+log = logging.getLogger(__name__)
 
 from src.parser import parse_replay, ARABIA_MAP_ID, MIN_DURATION_MIN
 from src.features import build_delta_row, MODEL_FEATURE_COLS
@@ -123,6 +127,7 @@ def run_pipeline(filepath, model, distributions, profile_id=None, top_n=5):
         }
 
     except Exception as e:
+        log.error('run_pipeline failed for %s:\n%s', filepath, traceback.format_exc())
         return {
             'status':   'error',
             'error':    f"{type(e).__name__}: {e}",
