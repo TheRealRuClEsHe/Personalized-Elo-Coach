@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EloCoach — AoE2 Replay Analyzer</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f1117;
+      --surface:    #1a1d27;
+      --surface2:   #22263a;
+      --border:     #2e334d;
+      --accent:     #4f7cff;
+      --accent-dim: #2a3f80;
+      --text:       #e2e6f0;
+      --text-muted: #7a84a3;
+      --green:      #2ecc71;
+      --red:        #e74c3c;
+      --yellow:     #f39c12;
+      --radius:     10px;
+      --shadow:     0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────────── */
+    .container { width: 100%; max-width: 740px; }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+    header p {
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-size: 0.95rem;
+    }
+
+    /* ── Card ────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Drop Zone ───────────────────────────────────────────────────── */
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: var(--surface2);
+    }
+    #drop-zone:hover,
+    #drop-zone.dragging {
+      border-color: var(--accent);
+      background: rgba(79,124,255,0.06);
+    }
+    #drop-zone.has-file {
+      border-color: var(--green);
+      background: rgba(46,204,113,0.06);
+    }
+    #drop-zone .icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+    }
+    #drop-zone .label {
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+    #drop-zone .label span {
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #drop-zone .file-name {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+    #file-input { display: none; }
+
+    /* ── Options row ─────────────────────────────────────────────────── */
+    .options {
+      display: flex;
+      gap: 16px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 160px;
+    }
+    .field label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .field input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--text-muted); }
+
+    /* ── Analyze button ──────────────────────────────────────────────── */
+    #analyze-btn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    #analyze-btn:hover:not(:disabled) { background: #6b8fff; }
+    #analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Spinner ─────────────────────────────────────────────────────── */
+    #spinner {
+      display: none;
+      text-align: center;
+      padding: 36px;
+      color: var(--text-muted);
+    }
+    #spinner.active { display: block; }
+    .spin {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error banner ────────────────────────────────────────────────── */
+    #error-box {
+      display: none;
+      background: rgba(231,76,60,0.12);
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      color: #ff7f7f;
+      font-size: 0.9rem;
+    }
+    #error-box.active { display: block; }
+
+    /* ── Results section ─────────────────────────────────────────────── */
+    #results { display: none; }
+    #results.active { display: block; }
+
+    /* Meta row */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+    .meta-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+    }
+    .meta-chip .val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .meta-chip .lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-top: 4px;
+    }
+    .val.win   { color: var(--green); }
+    .val.loss  { color: var(--red); }
+    .val.neutral { color: var(--text); }
+
+    /* Win probability bar */
+    .prob-bar-wrap {
+      margin-top: 6px;
+      background: var(--surface2);
+      border-radius: 20px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .prob-bar {
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+      transition: width 0.8s ease;
+    }
+
+    /* Warnings */
+    .warning-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .warning-item {
+      background: rgba(243,156,18,0.1);
+      border: 1px solid var(--yellow);
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      color: #f5c842;
+    }
+
+    /* Recommendation cards */
+    .rec-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .rec-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      gap: 0 14px;
+      align-items: start;
+    }
+    .rec-rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .rec-body {}
+    .rec-feature {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .rec-message {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+    .rec-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .pct-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .pct-badge.bad   { background: rgba(231,76,60,0.2);   color: #ff7f7f; }
+    .pct-badge.mid   { background: rgba(243,156,18,0.2);  color: #f5c842; }
+    .pct-badge.ok    { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .delta-value {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    footer {
+      margin-top: 40px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>EloCoach</h1>
+    <p>Upload an AoE2 DE replay to get personalized coaching on your biggest weaknesses.</p>
+  </header>
+
+  <!-- Upload card -->
+  <div class="card">
+    <div class="card-title">Upload Replay</div>
+
+    <div id="drop-zone" role="button" tabindex="0" aria-label="Drop replay file here">
+      <div class="icon">🎮</div>
+      <div class="label">Drag &amp; drop your <strong>.aoe2record</strong> file here<br>
+        or <span id="browse-link">browse</span>
+      </div>
+      <div class="file-name" id="file-label"></div>
+    </div>
+    <input type="file" id="file-input" accept=".aoe2record" />
+
+    <div class="options">
+      <div class="field">
+        <label for="profile-id">Profile ID <em style="font-weight:400;text-transform:none">(optional)</em></label>
+        <input type="number" id="profile-id" placeholder="e.g. 3134896" min="1" />
+      </div>
+      <div class="field">
+        <label for="top-n">Recommendations</label>
+        <input type="number" id="top-n" value="5" min="1" max="10" />
+      </div>
+    </div>
+
+    <button id="analyze-btn" disabled>Analyze Replay</button>
+  </div>
+
+  <!-- Error display -->
+  <div id="error-box" role="alert"></div>
+
+  <!-- Loading spinner -->
+  <div id="spinner">
+    <div class="spin"></div>
+    <div>Parsing replay and computing coaching report…</div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Meta summary -->
+    <div class="card">
+      <div class="card-title">Game Summary — <span id="res-filename"></span></div>
+      <div id="warnings-wrap" class="warning-list" style="display:none"></div>
+      <div class="meta-grid" id="meta-grid"></div>
+      <div style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:0.85rem;color:var(--text-muted)">Win probability</span>
+          <span id="prob-label" style="font-size:0.85rem;font-weight:600;"></span>
+        </div>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar" id="prob-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coaching recommendations -->
+    <div class="card">
+      <div class="card-title">Top Coaching Recommendations</div>
+      <div class="rec-list" id="rec-list"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  EloCoach &middot; Model trained on Arabia 1v1 rated games &middot; Elo range shown in /health
+</footer>
+
+<script>
+// ── File handling ────────────────────────────────────────────────────────────
+const dropZone   = document.getElementById('drop-zone');
+const fileInput  = document.getElementById('file-input');
+const fileLabel  = document.getElementById('file-label');
+const browseLink = document.getElementById('browse-link');
+const analyzeBtn = document.getElementById('analyze-btn');
+
+let selectedFile = null;
+
+function setFile(file) {
+  if (!file || !file.name.toLowerCase().endsWith('.aoe2record')) {
+    showError('Please select a valid .aoe2record file.');
+    return;
+  }
+  selectedFile = file;
+  fileLabel.textContent = file.name + '  (' + (file.size / 1024).toFixed(0) + ' KB)';
+  dropZone.classList.add('has-file');
+  analyzeBtn.disabled = false;
+  clearError();
+}
+
+browseLink.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('click', (e) => { if (e.target !== browseLink) fileInput.click(); });
+dropZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragging');
+  const file = e.dataTransfer.files[0];
+  if (file) setFile(file);
+});
+
+// ── Analyze ──────────────────────────────────────────────────────────────────
+analyzeBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+
+  const profileId = document.getElementById('profile-id').value.trim();
+  const topN      = parseInt(document.getElementById('top-n').value) || 5;
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  let url = `/analyze?top_n=${topN}`;
+  if (profileId) url += `&profile_id=${profileId}`;
+
+  setLoading(true);
+  clearError();
+  hideResults();
+
+  try {
+    const resp = await fetch(url, { method: 'POST', body: formData });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      const detail = data.detail;
+      const msg = typeof detail === 'object'
+        ? (detail.error || detail.message || JSON.stringify(detail))
+        : String(detail || 'Unknown error');
+      showError(`Error ${resp.status}: ${msg}`);
+      return;
+    }
+
+    renderResults(data);
+  } catch (err) {
+    showError('Network error — is the server running? ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+});
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('spinner').classList.toggle('active', on);
+  analyzeBtn.disabled = on;
+}
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  box.textContent = msg;
+  box.classList.add('active');
+}
+function clearError() {
+  document.getElementById('error-box').classList.remove('active');
+}
+function hideResults() {
+  document.getElementById('results').classList.remove('active');
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+function renderResults(data) {
+  const resultsEl = document.getElementById('results');
+
+  // Filename
+  document.getElementById('res-filename').textContent = data.filename || '';
+
+  // Warnings
+  const warnWrap = document.getElementById('warnings-wrap');
+  const warnings = data.warnings || [];
+  if (warnings.length) {
+    warnWrap.innerHTML = warnings.map(w =>
+      `<div class="warning-item">⚠️ ${escHtml(w)}</div>`
+    ).join('');
+    warnWrap.style.display = 'flex';
+  } else {
+    warnWrap.style.display = 'none';
+  }
+
+  // Meta chips
+  const result   = data.actual_result;
+  const resultLabel = result === 1 ? 'WIN' : result === 0 ? 'LOSS' : '—';
+  const resultCls   = result === 1 ? 'win' : result === 0 ? 'loss' : 'neutral';
+  const myElo  = data.my_elo  != null ? Math.round(data.my_elo)  : '—';
+  const oppElo = data.opp_elo != null ? Math.round(data.opp_elo) : '—';
+  const dur    = data.duration_min != null ? data.duration_min.toFixed(1) + ' min' : '—';
+
+  document.getElementById('meta-grid').innerHTML = `
+    <div class="meta-chip">
+      <div class="val ${resultCls}">${resultLabel}</div>
+      <div class="lbl">Result</div>
+    </div>
+    <div class="meta-chip">
+      <div class="val neutral">${myElo}</div>
+      <div class="lbl">Your Elo</div>
+    </div>
+    <div class="meta-chip">
+      <div class="val neutral">${oppElo}</div>
+      <div class="lbl">Opp Elo</div>
+    </div>
+    <div class="meta-chip">
+      <div class="val neutral">${dur}</div>
+      <div class="lbl">Duration</div>
+    </div>
+  `;
+
+  // Win probability bar
+  const prob = data.win_probability != null ? data.win_probability : 0.5;
+  const probPct = (prob * 100).toFixed(1);
+  document.getElementById('prob-label').textContent = probPct + '%';
+  // Delay so CSS transition plays
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('prob-bar').style.width = probPct + '%';
+    });
+  });
+
+  // Recommendations
+  const recs = data.recommendations || [];
+  document.getElementById('rec-list').innerHTML = recs.length
+    ? recs.map(rec => renderRec(rec)).join('')
+    : '<div style="color:var(--text-muted);text-align:center;padding:20px">No recommendations generated.</div>';
+
+  resultsEl.classList.add('active');
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderRec(rec) {
+  const pct     = rec.percentile != null ? rec.percentile.toFixed(0) : '—';
+  const pctNum  = parseFloat(pct);
+  const dir     = rec.direction;  // 'negative' = lower is better, 'positive' = higher is better
+
+  // For timing (negative): high percentile = bad. For count (positive): low percentile = bad.
+  let badness, pctClass;
+  if (dir === 'negative') {
+    badness = pctNum;       // 80+ = bad, 50-79 = mid, <50 = ok
+  } else {
+    badness = 100 - pctNum; // low pct = bad, so invert
+  }
+  pctClass = badness >= 70 ? 'bad' : badness >= 45 ? 'mid' : 'ok';
+
+  const featureLabel = humanLabel(rec.feature);
+  const deltaVal = rec.value != null ? (rec.value > 0 ? '+' : '') + rec.value.toFixed(2) : '';
+  const pctHint  = dir === 'negative'
+    ? `P${pct} (lower is faster)`
+    : `P${pct} (higher is more)`;
+
+  return `
+    <div class="rec-card">
+      <div class="rec-rank">${rec.rank}</div>
+      <div class="rec-body">
+        <div class="rec-feature">${escHtml(featureLabel)}</div>
+        <div class="rec-message">${escHtml(rec.message || 'No coaching message available.')}</div>
+      </div>
+      <div class="rec-badge">
+        <span class="pct-badge ${pctClass}">${pctHint}</span>
+        ${deltaVal ? `<span class="delta-value">delta: ${deltaVal} min</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// Human-readable feature names
+const LABELS = {
+  feudal_min:              'Feudal Age Timing',
+  castle_min:              'Castle Age Timing',
+  imperial_min:            'Imperial Age Timing',
+  double_bit_axe_min:      'Double-Bit Axe',
+  bow_saw_min:             'Bow Saw',
+  horse_collar_min:        'Horse Collar',
+  wheelbarrow_min:         'Wheelbarrow',
+  hand_cart_min:           'Hand Cart',
+  gold_mining_min:         'Gold Mining',
+  loom_min:                'Loom',
+  town_watch_min:          'Town Watch',
+  first_barracks_min:      'First Barracks',
+  first_stable_min:        'First Stable',
+  first_archery_min:       'First Archery Range',
+  first_wall_min:          'First Wall',
+  villagers_dark_age:      'Villagers at Feudal',
+  villagers_feudal_age:    'Villagers at Castle',
+  villagers_castle_age:    'Villagers at Imperial',
+  villagers_imperial_age:  'Villagers (Imperial)',
+  mil_trained_dark_age:    'Military (Dark Age)',
+  mil_trained_feudal_age:  'Military (Feudal)',
+  mil_trained_castle_age:  'Military (Castle)',
+  mil_trained_imperial_age:'Military (Imperial)',
+  apm_feudal_age:          'APM in Feudal',
+  apm_castle_age:          'APM in Castle',
+  move_count:              'Move Commands',
+  order_count:             'Order Commands',
+  gather_point_count:      'Gather Point Commands',
+  barracks_count:          'Barracks Built',
+  stable_count:            'Stables Built',
+  archery_count:           'Archery Ranges Built',
+};
+
+function humanLabel(feature) {
+  // feature already has _delta stripped
+  return LABELS[feature] || feature.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+</script>
+</body>
+</html>

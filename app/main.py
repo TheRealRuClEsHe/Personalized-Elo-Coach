@@ -1,9 +1,9 @@
 """
-app/main.py — EloCoach FastAPI backend
+app/main.py -- EloCoach FastAPI backend
 
 Endpoints:
-    GET  /health    → model status + training metadata
-    POST /analyze   → upload .aoe2record → JSON coaching report
+    GET  /health    -> model status + training metadata
+    POST /analyze   -> upload .aoe2record -> JSON coaching report
 
 Usage:
     uvicorn app.main:app --reload --port 8000
@@ -20,22 +20,24 @@ from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.model import load_artifacts, run_pipeline
 
-# ── Logging ───────────────────────────────────────────────────────────────────
+# -- Logging ------------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s  %(levelname)s  %(message)s',
 )
 log = logging.getLogger(__name__)
 
-# ── Model directory ───────────────────────────────────────────────────────────
+# -- Model directory ----------------------------------------------------------
 # Resolve relative to this file so the app works from any cwd
 _APP_DIR   = Path(__file__).parent
 _MODEL_DIR = _APP_DIR.parent / 'models'
+_STATIC_DIR = _APP_DIR / 'static'
 
-# ── App state (populated at startup) ─────────────────────────────────────────
+# -- App state (populated at startup) -----------------------------------------
 _state: dict = {
     'model':         None,
     'distributions': None,
@@ -53,7 +55,7 @@ async def lifespan(app: FastAPI):
         _state['distributions'] = distributions
         _state['ready']         = True
         log.info(
-            'Model ready — %s  AUC=%.3f  Elo range %s–%s',
+            'Model ready -- %s  AUC=%.3f  Elo range %s-%s',
             distributions.get('winning_model', '?'),
             distributions.get('winning_auc', 0),
             int(distributions['elo_range'][0]),
@@ -74,7 +76,7 @@ app = FastAPI(
 )
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# -- Health check -------------------------------------------------------------
 @app.get('/health', summary='Model status and training metadata')
 def health():
     """
@@ -99,7 +101,7 @@ def health():
     }
 
 
-# ── Analyze endpoint ──────────────────────────────────────────────────────────
+# -- Analyze endpoint ---------------------------------------------------------
 @app.post('/analyze', summary='Upload a replay and get coaching')
 async def analyze(
     file: UploadFile = File(..., description='.aoe2record replay file'),
@@ -107,7 +109,7 @@ async def analyze(
         default=None,
         description=(
             'Your AoE2 profile ID (e.g. 3134896). '
-            'If omitted, defaults to the project owner\'s profile ID. '
+            'If omitted, defaults to the project owner profile ID. '
             'Used to identify which player to coach in the replay.'
         ),
     ),
@@ -115,37 +117,37 @@ async def analyze(
         default=5,
         ge=1,
         le=10,
-        description='Number of coaching recommendations to return (1–10)',
+        description='Number of coaching recommendations to return (1-10)',
     ),
 ):
     """
-    Upload an `.aoe2record` file and receive a personalized coaching report.
+    Upload an .aoe2record file and receive a personalized coaching report.
 
-    **Response fields:**
-    - `win_probability` — model's predicted win probability for you (0–1)
-    - `actual_result` — 1 if you won, 0 if you lost, null if unknown
-    - `recommendations` — top N coaching items ranked by priority
-    - `my_elo` / `opp_elo` — pre-game ratings from the replay's POSTGAME block
-    - `duration_min` — game length in minutes
-    - `warnings` — non-fatal issues (e.g. non-Arabia map)
+    Response fields:
+    - win_probability -- model predicted win probability for you (0-1)
+    - actual_result   -- 1 if you won, 0 if you lost, null if unknown
+    - recommendations -- top N coaching items ranked by priority
+    - my_elo / opp_elo -- pre-game ratings from the replay POSTGAME block
+    - duration_min    -- game length in minutes
+    - warnings        -- non-fatal issues (e.g. non-Arabia map)
 
-    **Recommendation fields:**
-    - `rank` — 1 = highest priority
-    - `feature` — what was measured (e.g. `feudal_min`)
-    - `percentile` — your delta vs opponent, ranked against training data (10–90)
-    - `value` — your raw delta (me − opponent)
-    - `direction` — `negative` = lower is better (timing), `positive` = higher is better (counts)
-    - `message` — plain-English coaching advice
-    - `priority` — SHAP importance × weakness score (for sorting)
+    Recommendation fields:
+    - rank        -- 1 = highest priority
+    - feature     -- what was measured (e.g. feudal_min)
+    - percentile  -- your delta vs opponent, ranked against training data (10-90)
+    - value       -- your raw delta (me minus opponent)
+    - direction   -- negative = lower is better (timing), positive = higher is better (counts)
+    - message     -- plain-English coaching advice
+    - priority    -- SHAP importance x weakness score (for sorting)
     """
-    # ── Guard: model must be loaded ───────────────────────────────────────────
+    # Guard: model must be loaded
     if not _state['ready']:
         raise HTTPException(
             status_code=503,
-            detail='Model not loaded — check /health for details',
+            detail='Model not loaded -- check /health for details',
         )
 
-    # ── Guard: file type ──────────────────────────────────────────────────────
+    # Guard: file type
     filename = file.filename or ''
     if not filename.lower().endswith('.aoe2record'):
         raise HTTPException(
@@ -153,8 +155,8 @@ async def analyze(
             detail=f'Expected a .aoe2record file, got: "{filename}"',
         )
 
-    # ── Save upload to temp file ──────────────────────────────────────────────
-    # mgz reads binary content — the extension doesn't matter for parsing,
+    # Save upload to temp file
+    # mgz reads binary content -- the extension does not matter for parsing,
     # but keeping it makes debugging easier if the temp file leaks.
     tmp_path = None
     try:
@@ -171,7 +173,7 @@ async def analyze(
             filename, len(content), profile_id,
         )
 
-        # ── Run pipeline ──────────────────────────────────────────────────────
+        # Run pipeline
         result = run_pipeline(
             filepath=tmp_path,
             model=_state['model'],
@@ -180,7 +182,7 @@ async def analyze(
             top_n=top_n,
         )
 
-        # ── Surface pipeline errors as HTTP 422 ───────────────────────────────
+        # Surface pipeline errors as HTTP 422
         if result.get('status') == 'error':
             log.warning('Pipeline error for %s: %s', filename, result.get('error'))
             raise HTTPException(
@@ -192,12 +194,12 @@ async def analyze(
                 },
             )
 
-        # Swap filepath back to original filename (don't leak temp path)
+        # Swap filepath back to original filename (do not leak temp path)
         result['filename'] = filename
         result.pop('filepath', None)
 
         log.info(
-            'Done — win_prob=%.3f  actual=%s  recs=%d',
+            'Done -- win_prob=%.3f  actual=%s  recs=%d',
             result.get('win_probability', 0),
             result.get('actual_result'),
             len(result.get('recommendations', [])),
@@ -211,3 +213,9 @@ async def analyze(
                 os.unlink(tmp_path)
             except OSError:
                 pass
+
+
+# -- Static frontend ----------------------------------------------------------
+# Mounted LAST so /health and /analyze are matched by the router first.
+# html=True makes GET / serve index.html automatically.
+app.mount('/', StaticFiles(directory=_STATIC_DIR, html=True), name='static')
