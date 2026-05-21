@@ -88,3 +88,14 @@ Format for each entry:
 - **Method**: Rewrote the row-building step in `src/model.py::predict_win_prob()`: `row = {col: (float(delta_dict[col]) if delta_dict.get(col) is not None else float('nan')) for col in feature_cols}`. Removed downstream `.astype(float)` call (not needed with this approach). File written via bash heredoc to avoid Windows-mount encoding corruption that caused null bytes in earlier write attempts.
 - **Result**: RESOLVED -- `predict_win_prob()` now handles all-None rows correctly. Confirmed with test: 30+ None-valued delta features, win probability returned as 0.832 without error. All 34 tests pass.
 - **Tags**: #api #fastapi #xgboost #dtype #none #nan #inference
+
+---
+
+## ISSUE-008
+- **ID**: ISSUE-008
+- **Date**: 2026-05-22
+- **Problem**: `POST /analyze` returns 422 with `RuntimeError: could not parse:` for replay file `AgeIIDE_Replay_479421981.aoe2record` (4285 KB). Error originates in mgz-fast before any project code runs, meaning the library itself cannot decompress or parse the replay header/body.
+- **Proposed fix**: Two candidates -- (1) replay is from a newer AoE2 DE patch whose format mgz-fast 1.0.0 does not support; update mgz-fast to latest version. (2) Replay is a team game (file size ~4 MB vs typical 1v1 ~1-2 MB) -- check player count in header.
+- **Method**: PENDING -- run locally: `python -c "from src.parser import parse_replay; g = parse_replay('path/to/replay'); print(list(g['player_stats'].keys()))"`. Also run `pip index versions mgz-fast` to check for newer releases. If newer version exists, update requirements.txt and redeploy.
+- **Result**: PENDING
+- **Tags**: #parsing #mgz #compatibility #production

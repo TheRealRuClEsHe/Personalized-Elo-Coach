@@ -7,6 +7,8 @@ starlette==1.0.0
 # Replay parsing
 mgz==1.8.51
 mgz-fast==1.0.0
+construct==2.8.16
+aocref==2.0.37
 
 # ML / inference
 xgboost==3.2.0
