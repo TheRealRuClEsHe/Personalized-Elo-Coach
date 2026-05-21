@@ -91,18 +91,18 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'villagers_dark_age_delta': (
         'positive',
-        'You have fewer villagers when reaching Feudal Age than opponents'
+        'You have fewer villagers when reaching Feudal Age than opponents. '
         'Keep TC always producing. Never let it go idle.',
     ),
     'villagers_feudal_age_delta': (
         'positive',
-        'You have fewer villagers when reaching Castle Age than opponents'
+        'You have fewer villagers when reaching Castle Age than opponents. '
         'Keep TC always producing. Never let it go idle.',
     ),
     'villagers_castle_age_delta': (
         'positive',
         'Fewer villagers at Castle Age means your economy is behind. '
-        'Keep TC always producing. Never let it go idle between ages.',
+        'Keep TC always producing. Never let it go idle.',
     ),
     'mil_trained_feudal_age_delta': (
         'positive',
