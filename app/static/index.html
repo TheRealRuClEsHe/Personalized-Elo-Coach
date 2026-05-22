@@ -592,7 +592,7 @@ function renderRec(rec) {
   const deltaUnit = dir === 'negative' ? ' min' : '';
   const pctHint  = dir === 'negative'
     ? `${pct}% of players at your Elo were faster`
-    : `Only ${pct}% of players at your Elo have fewer`;
+    : `${100 - pctNum}% of players at your Elo have more`;
 
   return `
     <div class="rec-card">
