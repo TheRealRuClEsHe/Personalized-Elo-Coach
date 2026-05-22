@@ -587,10 +587,12 @@ function renderRec(rec) {
   pctClass = badness >= 70 ? 'bad' : badness >= 45 ? 'mid' : 'ok';
 
   const featureLabel = humanLabel(rec.feature);
-  const deltaVal = rec.value != null ? (rec.value > 0 ? '+' : '') + rec.value.toFixed(2) : '';
+  const decimals = dir === 'negative' ? 2 : 0;
+  const deltaVal = rec.value != null ? (rec.value > 0 ? '+' : '') + rec.value.toFixed(decimals) : '';
+  const deltaUnit = dir === 'negative' ? ' min' : '';
   const pctHint  = dir === 'negative'
-    ? `P${pct} (lower is faster)`
-    : `P${pct} (higher is more)`;
+    ? `${pct}% of players at your Elo were faster`
+    : `Only ${pct}% of players at your Elo have fewer`;
 
   return `
     <div class="rec-card">
@@ -601,7 +603,7 @@ function renderRec(rec) {
       </div>
       <div class="rec-badge">
         <span class="pct-badge ${pctClass}">${pctHint}</span>
-        ${deltaVal ? `<span class="delta-value">delta: ${deltaVal} min</span>` : ''}
+        ${deltaVal ? `<span class="delta-value">delta: ${deltaVal}${deltaUnit}</span>` : ''}
       </div>
     </div>`;
 }

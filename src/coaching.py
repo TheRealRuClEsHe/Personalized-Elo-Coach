@@ -104,6 +104,11 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
         'Fewer villagers at Castle Age means your economy is behind. '
         'Keep TC always producing. Never let it go idle.',
     ),
+    'villagers_imperial_age_delta': (
+        'positive',
+        'Fewer villagers in Imperial Age than your opponent. '
+        'Keep TC always producing — villager lead in late game means faster unit replenishment and stronger eco recovery after fights.',
+    ),
     'mil_trained_feudal_age_delta': (
         'positive',
         'You train fewer military units in Feudal Age than opponents. '
@@ -158,6 +163,243 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
         'negative',
         'Slower Archery Range timing. If you plan an Archer-based strategy, the range should go '
         'up in Feudal right after Barracks — delay costs you units and map presence.',
+    ),
+    # ── Count features ────────────────────────────────────────────────────────
+    'mil_trained_dark_age_delta': (
+        'positive',
+        'Fewer military units trained in Dark Age than your opponent. A few scouts or militia '
+        'provide map control and deny your opponent\'s scouting before Feudal.',
+    ),
+    'apm_dark_age_delta': (
+        'positive',
+        'Lower actions-per-minute in Dark Age. The opening build phase demands multitasking — '
+        'queue villagers, move your scout, task villagers to new resources, and plan simultaneously.',
+    ),
+    'apm_imperial_age_delta': (
+        'positive',
+        'Lower APM in Imperial Age. Late game demands constant attention — produce units, '
+        'research upgrades, manage siege, and keep villagers tasked while fighting.',
+    ),
+    'wall_count_delta': (
+        'positive',
+        'Fewer wall segments built than your opponent. Walls limit raid paths and force opponents '
+        'to commit to a frontal assault. Prioritize walling chokepoints and woodlines in Feudal.',
+    ),
+    'stance_count_delta': (
+        'positive',
+        'Fewer stance commands than your opponent. Setting aggressive stance on scouts and '
+        'defensive stance on villagers under attack is a low-cost habit that saves units.',
+    ),
+    'ungarrison_count_delta': (
+        'positive',
+        'Fewer ungarrison commands. During raids, villagers should garrison quickly then ungarrison '
+        'to resume work once the threat clears — delays cost you villager working time.',
+    ),
+    'stable_count_delta': (
+        'positive',
+        'Fewer Stables built than your opponent. More Stables means faster Knight production '
+        'and quicker army replenishment after fights — add a second Stable in Castle Age.',
+    ),
+    'archery_count_delta': (
+        'positive',
+        'Fewer Archery Ranges built than your opponent. If playing an Archer strategy, '
+        'multiple ranges sustain pressure — add a second range once you hit Castle Age.',
+    ),
+    'blacksmith_count_delta': (
+        'positive',
+        'Fewer Blacksmiths built. Multiple Blacksmiths let you research attack and armor '
+        'upgrades in parallel — one extra Blacksmith in Castle Age pays for itself quickly.',
+    ),
+    'market_count_delta': (
+        'positive',
+        'Fewer Markets built than your opponent. Markets let you convert excess resources '
+        'into gold and are required for Guilds and trade — build one in Castle Age.',
+    ),
+
+    # ── Timing: eco buildings ─────────────────────────────────────────────────
+    'blacksmith_min_delta': (
+        'negative',
+        'You build your Blacksmith later than opponents. The Blacksmith unlocks all attack '
+        'and armor upgrades — build it immediately upon reaching Castle Age.',
+    ),
+    'market_min_delta': (
+        'negative',
+        'You build your Market later than opponents. An early Market lets you sell excess '
+        'resources for gold when your mines run low — a critical safety valve in long games.',
+    ),
+
+    # ── Timing: lumber upgrades ───────────────────────────────────────────────
+    'two_man_saw_min_delta': (
+        'negative',
+        'Slow Two-Man Saw research. Your primary Castle Age lumber upgrade — '
+        'research it early to keep wood income competitive during heavy production phases.',
+    ),
+
+    # ── Timing: farm upgrades ─────────────────────────────────────────────────
+    'heavy_plow_min_delta': (
+        'negative',
+        'You research Heavy Plow late. Heavy Plow significantly increases farm yield — '
+        'research it in Castle Age to sustain villager production through the mid-game.',
+    ),
+    'crop_rotation_min_delta': (
+        'negative',
+        'Slow Crop Rotation research. The final farm upgrade gives the highest yield — '
+        'research it in Imperial Age to maximise food income for sustained unit production.',
+    ),
+
+    # ── Timing: mining upgrades ───────────────────────────────────────────────
+    'gold_shafting_mining_min_delta': (
+        'negative',
+        'You research Gold Shaft Mining late. This Castle Age upgrade increases gold miner '
+        'output — research it upon reaching Castle Age to sustain military production longer.',
+    ),
+    'stone_mining_min_delta': (
+        'negative',
+        'Slow Stone Mining research. If you plan to build Castles or Stone Walls, '
+        'research Stone Mining early in Feudal to accelerate your stone income.',
+    ),
+    'stone_shafting_mining_min_delta': (
+        'negative',
+        'You research Stone Shaft Mining late. Faster stone collection lets you get Castles '
+        'up sooner — essential for a Castle-drop or tower rush strategy.',
+    ),
+
+    # ── Timing: town upgrades ─────────────────────────────────────────────────
+    'town_patrol_min_delta': (
+        'negative',
+        'Slow Town Patrol research. Town Patrol extends your line of sight beyond Town Watch — '
+        'research it in Castle Age to maintain map awareness as armies get larger.',
+    ),
+
+    # ── Timing: blacksmith attack upgrades ────────────────────────────────────
+    'forging_min_delta': (
+        'negative',
+        'You research Forging late. The first Blacksmith attack upgrade — research in Feudal '
+        'or early Castle Age. Attack advantage compounds through every fight.',
+    ),
+    'iron_casting_min_delta': (
+        'negative',
+        'Slow Iron Casting research. The second attack upgrade — research in Castle Age '
+        'to keep your army damage ahead of your opponent\'s armor.',
+    ),
+    'blast_furnace_min_delta': (
+        'negative',
+        'You research Blast Furnace late. The final attack upgrade — a must-have before '
+        'Imperial Age battles. Delay lets your opponent\'s units survive longer in every fight.',
+    ),
+
+    # ── Timing: infantry armor ────────────────────────────────────────────────
+    'scale_mail_armor_min_delta': (
+        'negative',
+        'Slow Scale Mail Armor research. The first infantry armor upgrade — research in '
+        'early Castle Age if running infantry to increase survivability in prolonged fights.',
+    ),
+    'chain_mail_armor_min_delta': (
+        'negative',
+        'You research Chain Mail Armor late. Keep the infantry armor chain moving in Castle Age '
+        'to stay ahead in sustained fights.',
+    ),
+    'plate_mail_armor_min_delta': (
+        'negative',
+        'Slow Plate Mail Armor research. Maximum infantry armor — research in Imperial Age '
+        'to make your infantry line significantly harder to kill in late-game fights.',
+    ),
+
+    # ── Timing: cavalry armor ─────────────────────────────────────────────────
+    'scale_barding_armor_min_delta': (
+        'negative',
+        'You research Scale Barding Armor late. The first cavalry armor upgrade — get it in '
+        'early Castle Age when running Knights to improve their survivability.',
+    ),
+    'chain_barding_armor_min_delta': (
+        'negative',
+        'Slow Chain Barding Armor research. The second cavalry armor upgrade — research in '
+        'Castle Age to keep your Knights alive through sustained pressure.',
+    ),
+    'plate_barding_armor_min_delta': (
+        'negative',
+        'You research Plate Barding Armor late. Full cavalry armor is critical for late-game '
+        'Paladin and Knight fights — delays cost you units in every engagement.',
+    ),
+
+    # ── Timing: archer attack upgrades ────────────────────────────────────────
+    'fletching_min_delta': (
+        'negative',
+        'Slow Fletching research. The first archer attack upgrade adds range and damage — '
+        'research it immediately upon hitting Castle Age if playing an Archer composition.',
+    ),
+    'bodkin_arrow_min_delta': (
+        'negative',
+        'You research Bodkin Arrow late. The second archer attack upgrade — delays let your '
+        'opponent\'s archers out-damage yours in Castle Age fights.',
+    ),
+    'bracer_min_delta': (
+        'negative',
+        'Slow Bracer research. The final archer attack upgrade adds range and damage — '
+        'a must-have in Imperial Age for Arbalest or Cavalry Archer compositions.',
+    ),
+
+    # ── Timing: archer armor ──────────────────────────────────────────────────
+    'padded_archer_armor_min_delta': (
+        'negative',
+        'You research Padded Archer Armor late. Reduces chip damage from Skirmishers and other '
+        'archers — research in Feudal or early Castle Age if playing Archers.',
+    ),
+    'leather_archer_armor_min_delta': (
+        'negative',
+        'Slow Leather Archer Armor research. Keep the archer armor chain going in Castle Age '
+        'to reduce losses in sustained archer fights.',
+    ),
+    'ring_archer_armor_min_delta': (
+        'negative',
+        'You research Ring Archer Armor late. Maximum archer armor — research in Imperial Age '
+        'to make your ranged units significantly more resilient in late-game engagements.',
+    ),
+
+    # ── Timing: cavalry upgrades ──────────────────────────────────────────────
+    'bloodlines_min_delta': (
+        'negative',
+        'Slow Bloodlines research. Bloodlines gives all cavalry +20 HP — one of the '
+        'highest-value Stable upgrades. Research it as soon as you reach Castle Age.',
+    ),
+    'husbandry_min_delta': (
+        'negative',
+        'You research Husbandry late. Increases cavalry movement speed by 10% — '
+        'critical for Knights raiding, catching archers, and escaping bad fights.',
+    ),
+
+    # ── Timing: archery/stable upgrades ───────────────────────────────────────
+    'thumb_ring_min_delta': (
+        'negative',
+        'Slow Thumb Ring research. Maximises archer fire rate and accuracy — '
+        'a high-priority Castle Age upgrade for any Archer or Cavalry Archer strategy.',
+    ),
+    'parthian_tactics_min_delta': (
+        'negative',
+        'You research Parthian Tactics late. Gives armor and attack bonuses to Cavalry Archers — '
+        'essential if running a CA composition in Castle or Imperial Age.',
+    ),
+
+    # ── Timing: miscellaneous upgrades ────────────────────────────────────────
+    'arson_min_delta': (
+        'negative',
+        'Slow Arson research. Gives infantry a bonus against buildings — research it if '
+        'running a Feudal or early Castle Age infantry push.',
+    ),
+    'gambeson_min_delta': (
+        'negative',
+        'You research Gambeson late. Gives the militia line additional armor — '
+        'an inexpensive Barracks upgrade that improves infantry survivability in early fights.',
+    ),
+    'squires_min_delta': (
+        'negative',
+        'Slow Squires research. Increases infantry movement speed — faster infantry means '
+        'better raiding, quicker responses to attacks, and easier retreats.',
+    ),
+    'chemistry_min_delta': (
+        'negative',
+        'You research Chemistry late. Increases projectile damage for all ranged units and '
+        'is required for Petards — a must-have in Imperial Age for any ranged composition.',
     ),
 }
 
