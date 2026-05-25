@@ -508,11 +508,17 @@ def rank_recommendations(
         pct = info.get('percentile')
         if pct is None:
             continue
-        shap_imp = global_shap_importance.get(col, 0.0)
+        shap_imp = global_shap_importance.get(col, 0.0) # how important this feature is to the model
 
         # Determine if timing (lower=better) by col name or direction in messages
-        is_timing = '_min_delta' in col or col in _LOWER_IS_BETTER
+        is_timing = '_min_delta' in col or col in _LOWER_IS_BETTER # Is this a timing feature (lower = better)?
+        
+        # weakness_score: how bad is the player at this feature?
+        #   timing: high percentile = slow = weak → score close to 1.0
+        #   count:  low percentile  = fewer = weak → score close to 1.0
         weakness_score = (pct / 100.0) if is_timing else (1.0 - pct / 100.0)
+
+        # priority = model importance × how weak you are at it
         priority = shap_imp * weakness_score
 
         msg_entry = COACHING_MESSAGES.get(col, ('', ''))
