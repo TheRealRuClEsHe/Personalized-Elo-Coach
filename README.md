@@ -1,2 +1,2 @@
 # Personalized-Elo-Coach
-Built a web application that analyzes AOE2 replay files using XGBoost and SHAP to generate 3 personalized coaching recommendations per player, identifying behavioral gaps relative to cohort benchmarks across Elo brackets.
+EloCoach is a data-driven coaching web application for Age of Empires II Definitive Edition. Players upload a replay file, and the site parses it, computes 70 in-game delta features (my stat minus opponent stat for every key in-game decision), runs it through a trained XGBoost classifier, and returns the top N coaching recommendations ranked by model importance × player weakness.
