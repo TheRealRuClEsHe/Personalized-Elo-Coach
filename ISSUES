@@ -99,3 +99,14 @@ Format for each entry:
 - **Method**: Deployed traceback logging. Railway logs confirmed exact failure: `mgz/fast/header.py line 46, in de_string: assert data.read(2) == b'\x60\x0a'` -- `AssertionError`. Discovered the local venv contains an EXTENDED header.py (982 lines) vs the PyPI build (768 lines) with per-save-version byte-skip logic (`save >= 66.3`, `save >= 67.2`, etc.) that handles newer AoE2 DE patch formats. The PyPI wheel and local wheel are both labeled 1.0.0 but contain different code. Fix: vendored the local header.py as `src/mgz_fast_header.py` and replaced the installed module at startup in `app/main.py` using `importlib.util.spec_from_file_location` before any src imports run.
 - **Result**: RESOLVED -- vendored header deployed and confirmed working. AgeIIDE_Replay_479421981.aoe2record now parses correctly on Railway: LOSS, Elo 2686 vs 2818, 31.5 min, win probability 19.4%, coaching recommendations returned successfully.
 - **Tags**: #parsing #mgz #compatibility #production #linux #c-extension
+
+---
+
+## ISSUE-009
+- **ID**: ISSUE-009
+- **Date**: 2026-05-25
+- **Problem**: `VILLAGER_ID = 83` only tracks male villagers. Female villagers use unit ID `293` and are produced by certain civilizations (Aztecs always produce female; other civs may alternate). Any game where a player uses such a civ results in undercounted `villagers_{phase}` stats, potentially zeroing out the villager count entirely for that player. This silently corrupts V1 training data and will also affect the upcoming V2 TC idle time calculation.
+- **Proposed fix**: Replace the scalar `VILLAGER_ID = 83` with a set `VILLAGER_IDS = {83, 293}` and update the DE_QUEUE check from `uid == VILLAGER_ID` to `uid in VILLAGER_IDS`.
+- **Method**: Two edits to `src/parser.py`: (1) line 32 — changed constant to `VILLAGER_IDS = {83, 293}`; (2) line 236 — changed condition to `if uid in VILLAGER_IDS`. Bug discovered during V2 feature feasibility audit (notebook 07_v2_tc_vill_idle) while inspecting the AoE2 unit reference table.
+- **Result**: RESOLVED — both edits applied. Note: existing `parsed_replays.csv` and trained model were built with the old constant. Villager counts for Aztec/female-vill civ matchups are undercounted in the current dataset. Impact on model AUC is unknown but likely small given Aztec is one civ of many. Will be corrected automatically when bulk parse is re-run for V2.
+- **Tags**: #parsing #villager #bug #data #feature-engineering #v2

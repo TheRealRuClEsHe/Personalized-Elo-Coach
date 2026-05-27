@@ -29,7 +29,7 @@ MIN_DURATION_MIN      = 8
 MY_PROFILE_ID  = 3134896
 MY_PLAYER_NAME = {'TheRealRuClEsHe', "b'TheRealRuClEsHe'"}
 
-VILLAGER_ID = 83
+VILLAGER_IDS = {83, 293}   # 83 = male villager, 293 = female villager (Aztecs + civ-dependent)
 
 TRACKED_BUILDINGS = {
     12:  'first_barracks_min',
@@ -233,7 +233,7 @@ def parse_replay(filepath):
                     if act == 'DE_QUEUE':
                         uid    = ap.get('unit_id')
                         amount = ap.get('amount', 1) or 1
-                        if uid == VILLAGER_ID:
+                        if uid in VILLAGER_IDS:
                             s[f'villagers_{phase}'] += amount
                         else:
                             s[f'mil_trained_{phase}'] += amount

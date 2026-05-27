@@ -26,27 +26,27 @@ from typing import Optional
 COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     'feudal_min_delta': (
         'negative',
-        'Your feudal time is slower than opponents. Click up earlier — feudal time is the single '
-        'biggest win predictor in this Elo range. Aim to click feudal by 9:30–10:00.',
+        'Your feudal age timing is slower than opponent. Clicking up earlier is usually signals better '
+        'economy management.',
     ),
     'castle_min_delta': (
         'negative',
-        'Your castle age timing is behind. Rushing to Castle unlocks Knights, Crossbows, and Unique '
-        'Units before your opponent. Target castle click-up by 17–18 minutes.',
+        'Your castle age timing is slower than opponent. Castle Age unlocks Knights, Crossbows, Unique '
+        'Units and other powerful units.',
     ),
     'hand_cart_min_delta': (
         'negative',
-        'You research Hand Cart later than opponents. Hand Cart is one of the most cost-efficient '
-        'villager upgrades — delay hurts your economy for the rest of the game.',
+        'You research Hand Cart later than opponent. delaying this eco upgrades means your villagers '
+        'are less efficient for the rest of the game.',
     ),
     'gold_mining_min_delta': (
         'negative',
-        'You start mining gold later than opponents. Getting gold miners up early funds military '
+        'You researched gold mining later than opponent. Getting gold miners up early funds military '
         'production and prevents being outnumbered when pressure comes.',
     ),
     'loom_min_delta': (
         'negative',
-        'You research Loom later than opponents. Loom is critical for villager survival during early '
+        'You research Loom later than opponent. Loom is critical for villager survival during early '
         'scout rushes — research it within the first 2 minutes.',
     ),
     'imperial_min_delta': (
@@ -56,7 +56,7 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'double_bit_axe_min_delta': (
         'negative',
-        'You research Double-Bit Axe later than opponents. This is your first eco upgrade in Feudal — '
+        'You research Double-Bit Axe later than opponent. This is your first eco upgrade in Feudal — '
         'research it immediately after transitioning to stay even on wood income.',
     ),
     'horse_collar_min_delta': (
@@ -66,7 +66,7 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'wheelbarrow_min_delta': (
         'negative',
-        'You research Wheelbarrow later than opponents. Wheelbarrow is the biggest mid-game eco '
+        'You research Wheelbarrow later than opponent. Wheelbarrow is the biggest mid-game eco '
         'upgrade — research it in early Castle Age to compound your food income.',
     ),
     'bow_saw_min_delta': (
@@ -81,7 +81,7 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'move_count_delta': (
         'positive',
-        'Your move command count is lower than opponents, suggesting less active micro. '
+        'Your move command count is lower than opponent, suggesting less active micro. '
         'Keep units moving, harass more, and actively scout with your military.',
     ),
     'order_count_delta': (
@@ -91,12 +91,12 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'villagers_dark_age_delta': (
         'positive',
-        'You have fewer villagers when reaching Feudal Age than opponents. '
+        'You have fewer villagers when reaching Feudal Age than opponent. '
         'Keep TC always producing. Never let it go idle.',
     ),
     'villagers_feudal_age_delta': (
         'positive',
-        'You have fewer villagers when reaching Castle Age than opponents. '
+        'You have fewer villagers when reaching Castle Age than opponent. '
         'Keep TC always producing. Never let it go idle.',
     ),
     'villagers_castle_age_delta': (
@@ -111,7 +111,7 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'mil_trained_feudal_age_delta': (
         'positive',
-        'You train fewer military units in Feudal Age than opponents. '
+        'You train fewer military units in Feudal Age than opponent. '
         'Even 2–3 scouts or spearmen provide map control and deny opponent scouting.',
     ),
     'mil_trained_castle_age_delta': (
@@ -121,7 +121,7 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'mil_trained_imperial_age_delta': (
         'positive',
-        'You train fewer military units in Imperial Age than opponents. '
+        'You train fewer military units in Imperial Age than opponent. '
         'Sustained military production in Imperial is critical especially in late game situations where one fight can decide the game.',
     ),
     'apm_feudal_age_delta': (
@@ -141,17 +141,17 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'first_wall_min_delta': (
         'negative',
-        'You build your first wall later than opponents. Early walls provide map control and protect '
+        'You build your first wall later than opponent. Early walls provide map control and protect '
         'your economy from early aggression — start building walls in Feudal especially on open maps like Arabia',
     ),
     'first_barracks_min_delta': (
         'negative',
-        'You build your first Barracks later than opponents. Early Barracks gives you map control '
+        'You build your first Barracks later than opponent. Early Barracks gives you map control '
         'and the option for a Feudal push before the opponent walls or pressures.',
     ),
     'barracks_count_delta': (
         'positive',
-        'Fewer Barracks built than opponents. More production buildings means faster army '
+        'Fewer Barracks built than opponent. More production buildings means faster army '
         'replenishment — add a second or third Barracks when transitioning to Castle.',
     ),
     'first_stable_min_delta': (
@@ -182,7 +182,7 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     ),
     'wall_count_delta': (
         'positive',
-        'Fewer wall segments built than your opponent. Walls limit raid paths and force opponents '
+        'Fewer wall segments built than your opponent. Walls limit raid paths and force opponent '
         'to commit to a frontal assault. Prioritize walling chokepoints and woodlines in Feudal.',
     ),
     'stance_count_delta': (
@@ -219,12 +219,12 @@ COACHING_MESSAGES: dict[str, tuple[str, str]] = {
     # ── Timing: eco buildings ─────────────────────────────────────────────────
     'blacksmith_min_delta': (
         'negative',
-        'You build your Blacksmith later than opponents. The Blacksmith unlocks all attack '
+        'You build your Blacksmith later than opponent. The Blacksmith unlocks all attack '
         'and armor upgrades — build it immediately upon reaching Castle Age.',
     ),
     'market_min_delta': (
         'negative',
-        'You build your Market later than opponents. An early Market lets you sell excess '
+        'You build your Market later than opponent. An early Market lets you sell excess '
         'resources for gold when your mines run low — a critical safety valve in long games.',
     ),
 
