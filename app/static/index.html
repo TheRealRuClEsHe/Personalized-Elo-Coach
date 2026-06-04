@@ -417,7 +417,7 @@
       height: 32px;
       border-radius: 50%;
       background: var(--accent-dim);
-      color: var(--accent);
+      color: #fff;
       font-weight: 700;
       font-size: 0.9rem;
       display: flex;
@@ -488,7 +488,15 @@
 <header class="hero">
   <div class="hero-content">
     <h1 class="hero-title"><span class="elo">Elo</span><span class="coach">Coach</span></h1>
-    <p class="hero-sub">Upload your AoE2 DE 1v1 Arabia replays to get personalized coaching recommendations.</p>
+    <p class="hero-sub">ML-ranked coaching specific to your game — recommendations ordered by what the model predicts will impact your win rate most.</p>
+    <p class="hero-sub" style="margin-top:8px; font-size:0.9rem;">
+      Upload your AoE2 DE 1v1 Arabia replays to get personalized coaching recommendations.
+      <a href="https://support.ageofempires.com/hc/en-us/articles/9897722830100-Age-II-DE-Replays-on-PC"
+         target="_blank" rel="noopener"
+         style="color:#6ba3be; text-decoration:none; margin-left:6px;">
+        📁 Where is my replay file?
+      </a>
+    </p>
   </div>
 </header>
 
@@ -507,6 +515,14 @@
       <div class="icon">🎮</div>
       <div class="label">Drag &amp; drop your <strong>.aoe2record</strong> file here<br>
         or <span id="browse-link">browse</span>
+      </div>
+      <div style="margin-top:10px; font-size:0.8rem;">
+        <a href="https://support.ageofempires.com/hc/en-us/articles/9897722830100-Age-II-DE-Replays-on-PC"
+           target="_blank" rel="noopener"
+           style="color:var(--accent); text-decoration:none; opacity:0.8;"
+           onclick="event.stopPropagation();">
+          📁 Where is my replay file?
+        </a>
       </div>
       <div class="file-name" id="file-label"></div>
     </div>
@@ -973,7 +989,7 @@ function renderRec(rec) {
 
   return `
     <div class="rec-card">
-      <div class="rec-rank">${rec.rank}</div>
+      <div class="rec-rank" style="background:${rec.rank===1?'#c0392b':rec.rank===2?'#e67e22':rec.rank===3?'#f1c40f':'var(--accent-dim)'};color:${rec.rank===3?'#1a1d27':'#fff'}">${rec.rank}</div>
       <div class="rec-body">
         <div class="rec-feature">${escHtml(featureLabel)}</div>
         <div class="rec-message">${escHtml(rec.message || 'No coaching message available.')}</div>
