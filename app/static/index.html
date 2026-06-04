@@ -14,6 +14,8 @@
     gtag('config', 'G-QRD8GN4G1Z');
   </script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fondamento&display=swap');
+
     /* ── Reset & Base ─────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,7 +36,13 @@
     }
 
     body {
-      background: var(--bg);
+      background:
+        linear-gradient(180deg,
+          rgba(15,17,23,0.45) 0%,
+          rgba(15,17,23,0.75) 40%,
+          rgba(15,17,23,0.93) 100%
+        ),
+        url('/bg-hero.jpg') 10% 10% / 130% auto no-repeat fixed;
       color: var(--text);
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       font-size: 15px;
@@ -43,26 +51,34 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 16px 80px;
     }
 
     /* ── Layout ──────────────────────────────────────────────────────── */
-    .container { width: 100%; max-width: 740px; }
+    .container { width: 100%; max-width: 740px; padding: 28px 16px 80px; }
 
-    header {
+    /* ── Hero ────────────────────────────────────────────────────────── */
+    .hero {
+      width: 100%;
+      align-self: stretch;
+      position: relative;
+      padding: 72px 20px 48px;
       text-align: center;
-      margin-bottom: 36px;
     }
-    header h1 {
-      font-size: 2rem;
+    .hero-content { position: relative; z-index: 1; }
+    .hero-title {
+      font-family: 'Fondamento', cursive;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
       font-weight: 700;
-      color: var(--accent);
-      letter-spacing: -0.5px;
+      letter-spacing: .02em;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.9));
     }
-    header p {
-      color: var(--text-muted);
-      margin-top: 6px;
-      font-size: 0.95rem;
+    .hero-title .elo   { color: #ffffff; }
+    .hero-title .coach { color: #6ba3be; }
+    .hero-sub {
+      color: rgba(255,255,255,0.68);
+      margin-top: 10px;
+      font-size: 1rem;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9);
     }
 
     /* ── Card ────────────────────────────────────────────────────────── */
@@ -212,6 +228,26 @@
     /* ── Results section ─────────────────────────────────────────────── */
     #results { display: none; }
     #results.active { display: block; }
+
+    /* ── Player selector ────────────────────────────────────────────── */
+    .player-btn {
+      flex: 1;
+      min-width: 180px;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      text-align: center;
+    }
+    .player-btn:hover  { background: var(--accent-dim); border-color: var(--accent); transform: translateY(-2px); }
+    .player-btn:active { transform: translateY(0); }
+    .player-btn .player-name { display: block; font-size: 1.05rem; }
+    .player-btn .player-elo  { display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
 
     /* ── Feedback widget ─────────────────────────────────────────────── */
     #feedback-buttons {
@@ -372,12 +408,15 @@
   </style>
 </head>
 <body>
-<div class="container">
 
-  <header>
-    <h1>EloCoach</h1>
-    <p>Upload an AoE2 DE replay to get personalized coaching on your biggest weaknesses.</p>
-  </header>
+<header class="hero">
+  <div class="hero-content">
+    <h1 class="hero-title"><span class="elo">Elo</span><span class="coach">Coach</span></h1>
+    <p class="hero-sub">Upload an AoE2 DE replay to get personalized coaching on your biggest weaknesses.</p>
+  </div>
+</header>
+
+<div class="container">
 
   <!-- Upload card -->
   <div class="card">
@@ -395,10 +434,10 @@
     <div class="options">
       <div class="field">
         <label for="profile-id">Profile ID <em style="font-weight:400;text-transform:none">(optional)</em></label>
-        <input type="number" id="profile-id" placeholder="e.g. 3134896" min="1" />
+        <input type="text" id="profile-id" placeholder="e.g. 3134896" inputmode="numeric" />
       </div>
       <div class="field">
-        <label for="top-n">Recommendations</label>
+        <label for="top-n">Top Recommendations</label>
         <input type="number" id="top-n" value="5" min="1" max="10" />
       </div>
     </div>
@@ -413,6 +452,17 @@
   <div id="spinner">
     <div class="spin"></div>
     <div>Parsing replay and computing coaching report…</div>
+  </div>
+
+  <!-- Player selector (shown after first parse when no profile_id given) -->
+  <div id="player-selector" style="display:none;">
+    <div class="card">
+      <div class="card-title">Which player are you?</div>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+        Select your name to see coaching tailored to your performance.
+      </p>
+      <div id="player-selector-btns" style="display:flex;gap:12px;flex-wrap:wrap;"></div>
+    </div>
   </div>
 
   <!-- Results -->
@@ -460,7 +510,8 @@
 </div>
 
 <footer>
-  EloCoach &middot; Model trained on Arabia 1v1 rated games &middot; Elo range shown in /health
+  EloCoach &middot; Model trained on Arabia 1v1 rated games &middot;
+  Age of Empires II © Microsoft Corporation. Used under Microsoft's Game Content Usage Rules.
 </footer>
 
 <script>
@@ -545,7 +596,12 @@ analyzeBtn.addEventListener('click', async () => {
       num_recs:        (data.recommendations || []).length,
     });
 
-    renderResults(data);
+    // If no profile_id was given, show player selector instead of results
+    if (!profileId && data.players && data.players.length === 2) {
+      showPlayerSelector(data.players);
+    } else {
+      renderResults(data);
+    }
 
     // Track time spent reading results (fires when user leaves/navigates away)
     const resultsStart = Date.now();
@@ -579,6 +635,7 @@ function clearError() {
 }
 function hideResults() {
   document.getElementById('results').classList.remove('active');
+  document.getElementById('player-selector').style.display = 'none';
 }
 
 // ── Render results ────────────────────────────────────────────────────────────
@@ -657,6 +714,55 @@ function resetFeedback() {
     b.classList.remove('selected');
     b.disabled = false;
   });
+}
+
+// ── Player selector ──────────────────────────────────────────────────────────
+let _pendingPlayers = null;  // store players from first parse for re-submit
+
+function showPlayerSelector(players) {
+  _pendingPlayers = players;
+  const btns = document.getElementById('player-selector-btns');
+  btns.innerHTML = players.map(p => `
+    <button class="player-btn" onclick="selectPlayer(${p.profile_id})">
+      <span class="player-name">${escHtml(p.name)}</span>
+      <span class="player-elo">Profile ID: ${p.profile_id || '—'}</span>
+    </button>
+  `).join('');
+  document.getElementById('player-selector').style.display = 'block';
+  document.getElementById('player-selector').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function selectPlayer(profileId) {
+  // Hide selector, set profile id, re-submit same file
+  document.getElementById('player-selector').style.display = 'none';
+  document.getElementById('profile-id').value = profileId;
+
+  if (!selectedFile) return;
+  const topN = parseInt(document.getElementById('top-n').value) || 5;
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  const url = `/analyze?top_n=${topN}&profile_id=${profileId}`;
+
+  setLoading(true);
+  clearError();
+
+  try {
+    const resp = await fetch(url, { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (!resp.ok) {
+      const detail = data.detail;
+      const msg = typeof detail === 'object'
+        ? (detail.error || detail.message || JSON.stringify(detail))
+        : String(detail || 'Unknown error');
+      showError(`Error ${resp.status}: ${msg}`);
+      return;
+    }
+    renderResults(data);
+  } catch (err) {
+    showError('Network error — ' + err.message);
+  } finally {
+    setLoading(false);
+  }
 }
 
 function submitFeedback(rating) {

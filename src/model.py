@@ -105,6 +105,22 @@ def run_pipeline(filepath, model, distributions, profile_id=None, top_n=5):
         shap_importance = _compute_global_shap(model, distributions)
         recommendations = rank_recommendations(user_profile, shap_importance, top_n=top_n)
 
+        # Build player list for frontend player-selector
+        def _decode_name(raw):
+            if isinstance(raw, bytes):
+                return raw.decode('utf-8', errors='replace')
+            return str(raw) if raw else 'Unknown'
+
+        de_players = game.get('de_players', {})
+        players_info = []
+        for pnum in [meta['my_player_num'], meta['opp_player_num']]:
+            dp = de_players.get(pnum, {})
+            players_info.append({
+                'player_num': pnum,
+                'name':       _decode_name(dp.get('name', '')),
+                'profile_id': dp.get('profile_id'),
+            })
+
         return {
             'status':          'ok',
             'error':           None,
@@ -118,6 +134,7 @@ def run_pipeline(filepath, model, distributions, profile_id=None, top_n=5):
             'win_probability': round(win_prob, 4),
             'actual_result':   meta['my_result'],
             'recommendations': recommendations,
+            'players':         players_info,
             'elo_context': {
                 'training_elo_range':  distributions.get('elo_range'),
                 'training_elo_median': distributions.get('elo_median'),
