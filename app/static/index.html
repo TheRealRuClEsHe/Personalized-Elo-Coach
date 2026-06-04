@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EloCoach — AoE2 Replay Analyzer</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QRD8GN4G1Z"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QRD8GN4G1Z');
+  </script>
   <style>
     /* ── Reset & Base ─────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -467,6 +476,8 @@ analyzeBtn.addEventListener('click', async () => {
   clearError();
   hideResults();
 
+  const uploadStart = Date.now();
+
   try {
     const resp = await fetch(url, { method: 'POST', body: formData });
     const data = await resp.json();
@@ -476,12 +487,37 @@ analyzeBtn.addEventListener('click', async () => {
       const msg = typeof detail === 'object'
         ? (detail.error || detail.message || JSON.stringify(detail))
         : String(detail || 'Unknown error');
+      // Track failed uploads
+      gtag('event', 'upload_failed', {
+        error_code: resp.status,
+        file_size_kb: Math.round(selectedFile.size / 1024),
+      });
       showError(`Error ${resp.status}: ${msg}`);
       return;
     }
 
+    // Track successful upload (this is the core metric)
+    const processingMs = Date.now() - uploadStart;
+    gtag('event', 'replay_analyzed', {
+      file_size_kb:    Math.round(selectedFile.size / 1024),
+      processing_ms:   processingMs,
+      win_probability: data.win_probability ?? null,
+      num_recs:        (data.recommendations || []).length,
+    });
+
     renderResults(data);
+
+    // Track time spent reading results (fires when user leaves/navigates away)
+    const resultsStart = Date.now();
+    const trackResultsTime = () => {
+      gtag('event', 'results_viewed', {
+        time_on_results_sec: Math.round((Date.now() - resultsStart) / 1000),
+      });
+    };
+    window.addEventListener('beforeunload', trackResultsTime, { once: true });
+
   } catch (err) {
+    gtag('event', 'upload_failed', { error_code: 0, error_msg: err.message });
     showError('Network error — is the server running? ' + err.message);
   } finally {
     setLoading(false);
