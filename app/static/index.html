@@ -517,12 +517,6 @@
         or <span id="browse-link">browse</span>
       </div>
       <div style="margin-top:10px; font-size:0.8rem;">
-        <a href="https://support.ageofempires.com/hc/en-us/articles/9897722830100-Age-II-DE-Replays-on-PC"
-           target="_blank" rel="noopener"
-           style="color:var(--accent); text-decoration:none; opacity:0.8;"
-           onclick="event.stopPropagation();">
-          📁 Where is my replay file?
-        </a>
       </div>
       <div class="file-name" id="file-label"></div>
     </div>
@@ -611,6 +605,7 @@
 
       <!-- Step 2a: helpful follow-up -->
       <div id="fb-step2-helpful" style="display:none;">
+        <button onclick="fbBack()" style="background:none;border:none;color:var(--text-muted);font-size:0.85rem;cursor:pointer;padding:0;margin-bottom:14px;">← Back</button>
         <div class="card-title" style="margin-bottom:16px;">What was helpful?</div>
         <div class="fb-options">
           <label class="fb-option"><input type="radio" name="fb-helpful-reason" value="recommendations_accurate" onchange="fbToggleOther('helpful')"> The recommendations were accurate</label>
@@ -629,6 +624,7 @@
 
       <!-- Step 2b: not helpful follow-up -->
       <div id="fb-step2-not-helpful" style="display:none;">
+        <button onclick="fbBack()" style="background:none;border:none;color:var(--text-muted);font-size:0.85rem;cursor:pointer;padding:0;margin-bottom:14px;">← Back</button>
         <div class="card-title" style="margin-bottom:16px;">What was the issue?</div>
         <div class="fb-options">
           <label class="fb-option"><input type="radio" name="fb-poor-reason" value="didnt_understand" onchange="fbToggleOther('poor')"> I didn't understand the recommendations</label>
@@ -882,6 +878,12 @@ function fbToggleOther(type) {
   el.style.display = (checked && checked.value === 'other') ? 'block' : 'none';
 }
 
+function fbBack() {
+  document.getElementById('fb-step2-helpful').style.display     = 'none';
+  document.getElementById('fb-step2-not-helpful').style.display = 'none';
+  document.getElementById('fb-step1').style.display             = 'block';
+}
+
 function fbStep2(rating) {
   document.getElementById('fb-step1').style.display = 'none';
   if (rating === 'helpful') {
@@ -989,7 +991,7 @@ function renderRec(rec) {
 
   return `
     <div class="rec-card">
-      <div class="rec-rank" style="background:${rec.rank===1?'#c0392b':rec.rank===2?'#e67e22':rec.rank===3?'#f1c40f':'var(--accent-dim)'};color:${rec.rank===3?'#1a1d27':'#fff'}">${rec.rank}</div>
+      <div class="rec-rank" style="background:${rec.rank===1?'#c0392b':rec.rank===2?'#e67e22':rec.rank===3?'#f1c40f':'var(--accent-dim)'};color:#fff">${rec.rank}</div>
       <div class="rec-body">
         <div class="rec-feature">${escHtml(featureLabel)}</div>
         <div class="rec-message">${escHtml(rec.message || 'No coaching message available.')}</div>
