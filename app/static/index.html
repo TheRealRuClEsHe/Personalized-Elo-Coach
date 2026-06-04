@@ -213,6 +213,31 @@
     #results { display: none; }
     #results.active { display: block; }
 
+    /* ── Feedback widget ─────────────────────────────────────────────── */
+    #feedback-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .feedback-btn {
+      flex: 1;
+      min-width: 160px;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .feedback-btn:hover  { background: var(--accent-dim); border-color: var(--accent); transform: translateY(-1px); }
+    .feedback-btn:active { transform: translateY(0); }
+    .feedback-good:hover { border-color: var(--green);  background: rgba(46,204,113,0.12); }
+    .feedback-mid:hover  { border-color: var(--yellow); background: rgba(243,156,18,0.12); }
+    .feedback-poor:hover { border-color: var(--red);    background: rgba(231,76,60,0.12);  }
+    .feedback-btn.selected { opacity: 0.5; cursor: default; }
+
     /* Meta row */
     .meta-grid {
       display: grid;
@@ -415,6 +440,21 @@
       <div class="rec-list" id="rec-list"></div>
     </div>
 
+    <!-- Feedback widget -->
+    <div class="card" id="feedback-card">
+      <div id="feedback-question">
+        <div class="card-title" style="margin-bottom:16px;">How useful was this analysis?</div>
+        <div id="feedback-buttons">
+          <button class="feedback-btn feedback-good"    onclick="submitFeedback('accurate')">✓ Accurate and helpful</button>
+          <button class="feedback-btn feedback-mid"     onclick="submitFeedback('decent')">~ Decent, missing features</button>
+          <button class="feedback-btn feedback-poor"    onclick="submitFeedback('poor')">✗ Needs major improvement</button>
+        </div>
+      </div>
+      <div id="feedback-thanks" style="display:none; text-align:center; padding:12px 0; color:var(--text-muted);">
+        Thanks for the feedback — it helps improve EloCoach.
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -604,8 +644,40 @@ function renderResults(data) {
     ? recs.map(rec => renderRec(rec)).join('')
     : '<div style="color:var(--text-muted);text-align:center;padding:20px">No recommendations generated.</div>';
 
+  resetFeedback();
   resultsEl.classList.add('active');
   resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Feedback widget ───────────────────────────────────────────────────────────
+function resetFeedback() {
+  document.getElementById('feedback-question').style.display = 'block';
+  document.getElementById('feedback-thanks').style.display   = 'none';
+  document.querySelectorAll('.feedback-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.disabled = false;
+  });
+}
+
+function submitFeedback(rating) {
+  // Disable all buttons immediately to prevent double-submit
+  document.querySelectorAll('.feedback-btn').forEach(b => {
+    b.classList.add('selected');
+    b.disabled = true;
+  });
+
+  // Fire GA4 event
+  const winProb = parseFloat(document.getElementById('prob-label').textContent) || null;
+  gtag('event', 'feedback_submitted', {
+    rating:          rating,          // 'accurate' | 'decent' | 'poor'
+    win_probability: winProb,
+  });
+
+  // Show thank-you after short delay
+  setTimeout(() => {
+    document.getElementById('feedback-question').style.display = 'none';
+    document.getElementById('feedback-thanks').style.display   = 'block';
+  }, 300);
 }
 
 function renderRec(rec) {
