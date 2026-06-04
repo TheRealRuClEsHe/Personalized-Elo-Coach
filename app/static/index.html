@@ -691,7 +691,8 @@ dropZone.addEventListener('drop', (e) => {
 analyzeBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
 
-  const profileId = document.getElementById('profile-id').value.trim();
+  const profileIdEl = document.getElementById('profile-id');
+  const profileId = profileIdEl ? profileIdEl.value.trim() : '';
   const topN      = parseInt(document.getElementById('top-n').value) || 5;
 
   const formData = new FormData();
@@ -893,7 +894,8 @@ function showPlayerSelector(players) {
 async function selectPlayer(profileId) {
   // Hide selector, set profile id, re-submit same file
   document.getElementById('player-selector').style.display = 'none';
-  document.getElementById('profile-id').value = profileId;
+  const profileIdInput = document.getElementById('profile-id');
+  if (profileIdInput) profileIdInput.value = profileId;
 
   if (!selectedFile) return;
   const topN = parseInt(document.getElementById('top-n').value) || 5;
