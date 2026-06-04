@@ -229,6 +229,50 @@
     #results { display: none; }
     #results.active { display: block; }
 
+    /* ── Info icon + tooltip ─────────────────────────────────────────── */
+    .info-icon {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: help;
+      user-select: none;
+    }
+    .info-icon:hover .info-tooltip,
+    .info-icon:focus .info-tooltip { opacity: 1; pointer-events: auto; }
+    .info-tooltip {
+      opacity: 0;
+      pointer-events: none;
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e2235;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      width: 280px;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: var(--text);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transition: opacity 0.15s;
+      z-index: 10;
+    }
+    .info-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--border);
+    }
+
     /* ── Player selector ────────────────────────────────────────────── */
     .player-btn {
       flex: 1;
@@ -498,7 +542,20 @@
 
     <!-- Coaching recommendations -->
     <div class="card">
-      <div class="card-title">Top Coaching Recommendations</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+        Top Coaching Recommendations
+        <span class="info-icon" tabindex="0">
+          ⓘ
+          <span class="info-tooltip">
+            <strong>What is delta?</strong><br>
+            Delta = your stat minus your opponent's in this game.<br><br>
+            Example: <em>delta: −1.2 min</em> means you clicked Feudal Age
+            1.2 minutes later than your opponent.<br><br>
+            Your <strong>percentile</strong> shows how that gap compares
+            to players at your Elo — so you know if it actually matters.
+          </span>
+        </span>
+      </div>
       <div class="rec-list" id="rec-list"></div>
     </div>
 
