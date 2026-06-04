@@ -1,3 +1,6 @@
+# Secrets — never commit credentials
+secrets/
+
 # Python
 venv/
 __pycache__/
@@ -28,6 +31,4 @@ AdvancedParser.log
 .claude/
 .vscode/
 
-# Test/pytest cache
-.pytest_cache/
-pytest-cache-files-*/
+# Test/p
