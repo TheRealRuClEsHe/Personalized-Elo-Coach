@@ -3,12 +3,20 @@ secrets/
 
 # Python
 venv/
+.venv/
 __pycache__/
 *.pyc
 .env
 
-# Models — small enough to commit (180KB total)
-# models/*.pkl
+# Mac system files
+.DS_Store
+
+# Models
+models/*.pkl
+
+# pytest cache
+pytest-cache*/
+.pytest_cache/
 
 # Data (bulk/raw files)
 data/bulk_replays/
