@@ -46,11 +46,11 @@ SERVICE_ACCOUNT_FILE = "secrets/ga_service_account.json"
 
 # GA4 numeric property ID — find it in GA4 Admin → Property Settings
 # (NOT the G-XXXXXXXX measurement ID — it's a plain number like 123456789)
-GA4_PROPERTY_ID = "YOUR_GA4_PROPERTY_ID"
+GA4_PROPERTY_ID = "540216240"
 
 # Google Sheet ID — the long string in the sheet URL:
 # https://docs.google.com/spreadsheets/d/<THIS_PART>/edit
-SHEET_ID = "YOUR_GOOGLE_SHEET_ID"
+SHEET_ID = "1vNvZcbL6p0_Yk7Rmrhxu75qpYYw1bQO9P9iljbXtr98"
 SHEET_TAB = "Feedback"  # Tab name to write to (created if missing)
 
 # Date range to pull (YYYY-MM-DD or "today", "yesterday", "NdaysAgo")
