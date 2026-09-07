@@ -11,8 +11,12 @@ markers = [
 ]
 
 [dependency-groups]
+# What CI installs. Kept minimal so the run stays fast.
 dev = [
     "pytest>=8",
-    "httpx>=0.27",
+    "httpx>=0.27",   # required by fastapi.testclient
+]
+# Local only, for the notebooks under notebooks/.
+notebooks = [
     "jupyter>=1",
 ]
