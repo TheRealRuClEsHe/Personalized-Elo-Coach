@@ -1,0 +1,18 @@
+# EloCoach is not an installable distribution — see docs/adr/0001-src-not-installable.md
+# This file exists to configure pytest and to declare development dependencies.
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = ["-m", "not slow"]
+markers = [
+    "slow: model-quality checks over the full training set; excluded from the default run",
+    "replay: requires the sample replay in data/sample_replays/",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "jupyter>=1",
+]
