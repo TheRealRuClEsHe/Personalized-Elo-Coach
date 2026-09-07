@@ -1,5 +1,19 @@
 # Project: Personalized Elo Coach
 
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The repo uses default triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` at repo root, ADRs under `docs/adr/`. See `docs/agents/domain.md`.
+
 ## Issue logging protocol
 
 When the user reports a bug, error, or unexpected behavior, OR when you propose 
