@@ -110,3 +110,25 @@ Format for each entry:
 - **Method**: Two edits to `src/parser.py`: (1) line 32 — changed constant to `VILLAGER_IDS = {83, 293}`; (2) line 236 — changed condition to `if uid in VILLAGER_IDS`. Bug discovered during V2 feature feasibility audit (notebook 07_v2_tc_vill_idle) while inspecting the AoE2 unit reference table.
 - **Result**: RESOLVED — both edits applied. Note: existing `parsed_replays.csv` and trained model were built with the old constant. Villager counts for Aztec/female-vill civ matchups are undercounted in the current dataset. Impact on model AUC is unknown but likely small given Aztec is one civ of many. Will be corrected automatically when bulk parse is re-run for V2.
 - **Tags**: #parsing #villager #bug #data #feature-engineering #v2
+
+---
+
+## ISSUE-010
+- **ID**: ISSUE-010
+- **Date**: 2026-09-07
+- **Problem**: `tests/` contained 444 lines across two files but **zero `def test_` functions and zero `assert` statements**. Both files were top-to-bottom print scripts built around a `check(label, condition)` helper that appended failures to an `errors` list and printed ✓/✗. Because all work happened at module level, pytest executed everything (including loading both `.pkl` artifacts and running inference over `features_delta.csv`) during *collection*, then collected no tests. A regression printed ✗ and the suite still reported success. Both files also began with `sys.path.insert(0, repo_root)`. Compounding this, `tests/test_src_pipeline.py` imported `VILLAGER_ID` from `src.parser`, but ISSUE-009 renamed that constant to `VILLAGER_IDS`; the import raised, was swallowed by a bare `except`, and the module then died with `NameError: MY_PROFILE_ID is not defined`. The file had been dead since ISSUE-009 and nothing reported it. There was also no CI, so nothing ran the suite at all.
+- **Proposed fix**: Add `pyproject.toml` with `pythonpath = ["."]` to remove the path hacks, a `conftest.py` holding session-scoped fixtures so artifacts load once and only on demand, and convert each `check()` call into a real assertion inside a `def test_*` function. Curate rather than port 1:1: drop tautologies (`check(..., True)`), bare count assertions, and any test pinning `MY_PROFILE_ID`, which the player-identity work will delete. Quarantine the `accuracy > 0.70` model-quality gate behind a `slow` marker so it stays out of the edit loop. Add GitHub Actions to actually run it.
+- **Method**: Added `pyproject.toml` (pytest config + PEP 735 `[dependency-groups]`, no `[project]` table — see ADR-0001). Added `tests/conftest.py` with session-scoped `artifacts`/`model`/`distributions`/`client`/`parsed_sample` fixtures and a `mock_game` fixture using arbitrary profile IDs (111/222) rather than the production constant. Rewrote both test files as 37 assertion-based tests. Committed `data/sample_replays/AgeIIDE_Replay_456895186.aoe2record` and added a `.gitignore` negation, since a blanket `*.aoe2record` rule would otherwise have silently excluded it; the previously dead "live replay" sections now run against it instead of a hardcoded Windows path. Rebuilt `.venv` on Python 3.11.15 (it was a broken 3.9.6 venv with no interpreter binary).
+- **Result**: RESOLVED — 36 tests pass in 2.6s for the default run, 1 slow test passes in 8.0s. Previously: 0 tests collected, 1 collection error, 43.75s.
+- **Tags**: #testing #pytest #ci #tooling #regression #tech-debt
+
+---
+
+## ISSUE-011
+- **ID**: ISSUE-011
+- **Date**: 2026-09-07
+- **Problem**: The vendored mgz-fast header fix from ISSUE-008 was applied by monkey-patching `sys.modules['mgz.fast.header']` inside `app/main.py` at import time. Only the ASGI entrypoint applied it, so every other caller — `tests/`, `scripts/`, the notebooks — imported the **unpatched** PyPI parser while `src/parser.py`'s own docstring claimed it was "import-safe ... without side effects." Confirmed empirically on a fresh 3.11 venv: PyPI `mgz-fast` 1.0.0 installs a 767-line header versus the 982-line vendored copy, and `from src.parser import parse_replay` on a real replay failed with `RuntimeError: could not parse` while the same replay parsed fine through `app/main.py`. This made end-to-end parser coverage impossible from tests.
+- **Proposed fix**: Move the patch behind the parser's own seam. A new `src/mgz_compat.py` applies the replacement on import; `src/parser.py` imports it ahead of its own `mgz` imports. Remove the block from `app/main.py`.
+- **Method**: Added `src/mgz_compat.py` exposing `apply()` and applying on import. Added `import src.mgz_compat` to `src/parser.py` above the `from mgz.fast import ...` lines, with a comment explaining the ordering requirement, and deleted the stale comment pointing at `main.py`. Removed the 12-line patch block plus the now-unused `importlib.util` and `sys` imports from `app/main.py`.
+- **Result**: RESOLVED — `from src.parser import parse_replay` now parses the sample replay with no entrypoint involvement (map_id 9, 45.5 min). Every caller gets the same parser as production.
+- **Tags**: #parsing #mgz #seam #architecture #import-safety

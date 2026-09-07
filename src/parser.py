@@ -14,12 +14,14 @@ import logging
 import os
 from collections import defaultdict
 
+# Must precede the mgz imports below: installs the vendored header that
+# supports newer AoE2 DE save formats. See src/mgz_compat.py.
+import src.mgz_compat  # noqa: F401
+
 from mgz.fast import operation, Operation, meta
 from mgz.fast.header import parse as fast_header_parse
 
 log = logging.getLogger(__name__)
-# Note: mgz.fast.header is replaced with src/mgz_fast_header.py at startup
-# by app/main.py before this module is imported. See main.py for details.
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 ARABIA_MAP_ID         = 9

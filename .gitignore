@@ -31,6 +31,8 @@ AdvancedParser.log
 
 # Replay files
 *.aoe2record
+# ...except the committed sample used by tests and the demo
+!data/sample_replays/*.aoe2record
 
 # Word docs (generated artifacts)
 *.docx

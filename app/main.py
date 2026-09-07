@@ -11,27 +11,12 @@ Usage:
 From project root. Model loads once at startup.
 """
 
-import importlib.util
-import sys
 import tempfile
 import os
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
-
-# -- Vendor patched mgz-fast header ------------------------------------------
-# mgz-fast 1.0.0 on PyPI does not support newer AoE2 DE patch save formats.
-# The local venv ships an extended header.py (982 lines vs the PyPI 768 lines)
-# with per-save-version byte-skip logic. We replace the installed module with
-# our vendored copy before any src.* imports so the fix applies everywhere.
-_HEADER_PATCH = Path(__file__).parent.parent / 'src' / 'mgz_fast_header.py'
-if _HEADER_PATCH.exists():
-    _spec = importlib.util.spec_from_file_location('mgz.fast.header', _HEADER_PATCH)
-    _mod  = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_mod)
-    sys.modules['mgz.fast.header'] = _mod
-# -----------------------------------------------------------------------------
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.responses import JSONResponse

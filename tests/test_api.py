@@ -1,149 +1,104 @@
 """
-tests/test_api.py
+Tests for the HTTP surface.
 
-API integration tests. Run from project root:
-    python -m pytest tests/test_api.py -v
-or:
-    python tests/test_api.py
-
-Tests that do NOT require a real replay:
-    - /health endpoint
-    - /analyze — wrong file extension → 400
-    - /analyze — garbage binary → 422 (parse error surfaces cleanly)
-    - /analyze — top_n out of range → 422 (FastAPI validation)
-    - /analyze — profile_id passed through query param
-
-Tests that DO require a real replay (skipped if none found):
-    - Full round-trip: upload → parse → predict → recommendations
+The client fixture runs the app's lifespan, so these exercise the same
+startup path production uses.
 """
 
-import sys
-from pathlib import Path
+from __future__ import annotations
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+import pytest
 
-from fastapi.testclient import TestClient
-from app.main import app
-
-REPO = Path(__file__).parent.parent
-
-PASS = '✓'
-FAIL = '✗'
-errors = []
+from conftest import SAMPLE_COACHED_PROFILE_ID
 
 
-def check(label, condition, detail=''):
-    if condition:
-        print(f'  {PASS}  {label}')
-    else:
-        print(f'  {FAIL}  {label}  {detail}')
-        errors.append(label)
+# ── /health ──────────────────────────────────────────────────────────────────
+
+def test_health_reports_a_loaded_model(client):
+    body = client.get('/health').json()
+    assert body['status'] == 'ok'
+    assert body['model_loaded'] is True
 
 
-with TestClient(app) as client:
-
-    # ── /health ───────────────────────────────────────────────────────────────
-    print('\n[1] GET /health')
-    r = client.get('/health')
-    check('status 200', r.status_code == 200, str(r.status_code))
-    data = r.json()
-    check('status=ok', data.get('status') == 'ok')
-    check('model_loaded=True', data.get('model_loaded') is True)
-    check('winning_model present', bool(data.get('winning_model')))
-    check('winning_auc > 0.5', (data.get('winning_auc') or 0) > 0.5)
-    check('feature_count=70', data.get('feature_count') == 70, str(data.get('feature_count')))
-    check('elo_range is list of 2', isinstance(data.get('elo_range'), list) and len(data['elo_range']) == 2)
-
-    # ── /analyze — bad file extension ────────────────────────────────────────
-    print('\n[2] POST /analyze — wrong extension')
-    r = client.post('/analyze',
-        files={'file': ('replay.mp4', b'notathing', 'application/octet-stream')})
-    check('status 400', r.status_code == 400, str(r.status_code))
-    check('detail mentions filename', 'replay.mp4' in str(r.json().get('detail', '')))
-
-    # ── /analyze — correct extension, garbage content ─────────────────────────
-    print('\n[3] POST /analyze — .aoe2record, garbage binary')
-    r = client.post('/analyze',
-        files={'file': ('bad.aoe2record', b'\x00\x01\x02\x03garbage', 'application/octet-stream')})
-    check('status 422', r.status_code == 422, str(r.status_code))
-    detail = r.json().get('detail', {})
-    check('detail has message key', isinstance(detail, dict) and 'message' in detail)
-    check('detail has error key', isinstance(detail, dict) and 'error' in detail)
-
-    # ── /analyze — top_n out of range ────────────────────────────────────────
-    print('\n[4] POST /analyze — top_n=99 (out of range)')
-    r = client.post('/analyze?top_n=99',
-        files={'file': ('x.aoe2record', b'x', 'application/octet-stream')})
-    check('status 422 (FastAPI validation)', r.status_code == 422, str(r.status_code))
-
-    print('\n[5] POST /analyze — top_n=0 (out of range)')
-    r = client.post('/analyze?top_n=0',
-        files={'file': ('x.aoe2record', b'x', 'application/octet-stream')})
-    check('status 422 (FastAPI validation)', r.status_code == 422, str(r.status_code))
-
-    # ── /analyze — profile_id query param parses correctly ───────────────────
-    print('\n[6] POST /analyze — profile_id query param')
-    # Garbage binary → 422, but the 400 for bad extension takes priority if wrong ext
-    # So use correct ext to confirm profile_id is parsed before the file error
-    r = client.post('/analyze?profile_id=3134896',
-        files={'file': ('test.aoe2record', b'garbage', 'application/octet-stream')})
-    # Should fail at parse (422), not at profile_id validation
-    check('profile_id accepted (reaches parse stage)', r.status_code == 422, str(r.status_code))
-
-    # ── Real replay round-trip (skipped if no replay found) ──────────────────
-    print('\n[7] POST /analyze — real replay (requires .aoe2record file)')
-    replay_dirs = [
-        Path('C:/Users/liher/Games/Age of Empires 2 DE/76561198151543542/savegame'),
-        REPO / 'data' / 'sample_replays',
-        REPO / 'data' / 'bulk_replays',
-    ]
-    replay_file = None
-    for d in replay_dirs:
-        if d.exists():
-            files = list(d.glob('*.aoe2record'))
-            if files:
-                replay_file = files[0]
-                break
-
-    if replay_file is None:
-        print('  -  No .aoe2record files found — skipping live replay test')
-    else:
-        print(f'  Using: {replay_file.name}')
-        with open(replay_file, 'rb') as fh:
-            content = fh.read()
-
-        r = client.post(
-            '/analyze?profile_id=3134896&top_n=5',
-            files={'file': (replay_file.name, content, 'application/octet-stream')},
-        )
-        check('status 200', r.status_code == 200, str(r.status_code))
-        if r.status_code == 200:
-            data = r.json()
-            check('status=ok', data.get('status') == 'ok')
-            check('win_probability in [0,1]',
-                  0.0 <= data.get('win_probability', -1) <= 1.0)
-            check('recommendations is list',
-                  isinstance(data.get('recommendations'), list))
-            check('up to 5 recommendations',
-                  0 < len(data.get('recommendations', [])) <= 5)
-            check('duration_min > 0', (data.get('duration_min') or 0) > 0)
-            check('no filepath leaked', 'filepath' not in data)
-            check('filename present', bool(data.get('filename')))
-
-            recs = data['recommendations']
-            if recs:
-                first = recs[0]
-                check('rec has rank/feature/percentile/message',
-                      all(k in first for k in ('rank', 'feature', 'percentile', 'message')))
-
-            print(f'     win_prob={data["win_probability"]}  actual={data["actual_result"]}')
-            print(f'     top rec: {recs[0]["feature"] if recs else "none"}')
+def test_health_exposes_training_metadata(client, distributions):
+    body = client.get('/health').json()
+    assert body['winning_model']
+    assert body['winning_auc'] > 0.5
+    assert body['feature_count'] == len(distributions['feature_cols'])
+    assert len(body['elo_range']) == 2
 
 
-# ── Summary ───────────────────────────────────────────────────────────────────
-print()
-if errors:
-    print(f'FAILED — {len(errors)} test(s): {errors}')
-    import sys; sys.exit(1)
-else:
-    print('ALL TESTS PASSED')
+# ── /analyze rejections ──────────────────────────────────────────────────────
+
+def test_rejects_a_file_that_is_not_a_replay(client):
+    response = client.post(
+        '/analyze',
+        files={'file': ('replay.mp4', b'not a replay', 'application/octet-stream')},
+    )
+    assert response.status_code == 400
+    assert 'replay.mp4' in str(response.json()['detail'])
+
+
+def test_unparseable_replay_returns_a_structured_error(client):
+    response = client.post(
+        '/analyze',
+        files={'file': ('bad.aoe2record', b'\x00\x01\x02\x03garbage', 'application/octet-stream')},
+    )
+    assert response.status_code == 422
+    detail = response.json()['detail']
+    assert 'message' in detail
+    assert 'error' in detail
+
+
+@pytest.mark.parametrize('top_n', [0, 11, 99])
+def test_rejects_out_of_range_recommendation_counts(client, top_n):
+    response = client.post(
+        f'/analyze?top_n={top_n}',
+        files={'file': ('x.aoe2record', b'x', 'application/octet-stream')},
+    )
+    assert response.status_code == 422
+
+
+def test_profile_id_is_accepted_and_reaches_the_parse_stage(client):
+    """A valid profile_id must not itself be a validation failure."""
+    response = client.post(
+        f'/analyze?profile_id={SAMPLE_COACHED_PROFILE_ID}',
+        files={'file': ('test.aoe2record', b'garbage', 'application/octet-stream')},
+    )
+    assert response.status_code == 422
+    assert 'message' in response.json()['detail']
+
+
+# ── /analyze round trip ──────────────────────────────────────────────────────
+
+@pytest.fixture(scope='session')
+def analysis(client, sample_replay):
+    response = client.post(
+        f'/analyze?profile_id={SAMPLE_COACHED_PROFILE_ID}&top_n=5',
+        files={'file': (sample_replay.name, sample_replay.read_bytes(), 'application/octet-stream')},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_analysis_returns_a_win_probability(analysis):
+    assert analysis['status'] == 'ok'
+    assert 0.0 <= analysis['win_probability'] <= 1.0
+
+
+def test_analysis_returns_the_requested_recommendations(analysis):
+    assert 0 < len(analysis['recommendations']) <= 5
+    first = analysis['recommendations'][0]
+    assert {'rank', 'feature', 'percentile', 'message'} <= set(first)
+    assert first['rank'] == 1
+
+
+def test_analysis_names_both_players(analysis):
+    assert len(analysis['players']) == 2
+    assert analysis['players'][0]['profile_id'] == SAMPLE_COACHED_PROFILE_ID
+
+
+def test_analysis_does_not_leak_the_server_temp_path(analysis, sample_replay):
+    """The client uploaded a name; it must not learn where the server put it."""
+    assert 'filepath' not in analysis
+    assert analysis['filename'] == sample_replay.name
