@@ -11,9 +11,6 @@ __pycache__/
 # Mac system files
 .DS_Store
 
-# Models
-models/*.pkl
-
 # pytest cache
 pytest-cache*/
 .pytest_cache/

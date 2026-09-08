@@ -1,7 +1,7 @@
 # Issue Tracker: GitHub Issues
 
 Issues for this repo are tracked in GitHub Issues at:
-https://github.com/TheRealRuClEsHe/Personalized-Elo-Coach/issues
+https://github.com/herculesli/Personalized-Elo-Coach/issues
 
 ## How skills use it
 

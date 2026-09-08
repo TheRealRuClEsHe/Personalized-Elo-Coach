@@ -132,3 +132,14 @@ Format for each entry:
 - **Method**: Added `src/mgz_compat.py` exposing `apply()` and applying on import. Added `import src.mgz_compat` to `src/parser.py` above the `from mgz.fast import ...` lines, with a comment explaining the ordering requirement, and deleted the stale comment pointing at `main.py`. Removed the 12-line patch block plus the now-unused `importlib.util` and `sys` imports from `app/main.py`.
 - **Result**: RESOLVED — `from src.parser import parse_replay` now parses the sample replay with no entrypoint involvement (map_id 9, 45.5 min). Every caller gets the same parser as production.
 - **Tags**: #parsing #mgz #seam #architecture #import-safety
+
+---
+
+## ISSUE-012
+- **ID**: ISSUE-012
+- **Date**: 2026-09-07
+- **Problem**: `/improve-codebase-architecture`'s report flagged repo layout contradictions (candidate C6): `.gitignore` claimed `models/*.pkl` was ignored while both `.pkl` files were deliberately tracked for Railway deploy; a stray `pytest-cache-files-skjyc6kr/` was committed despite the `pytest-cache*/` gitignore rule; generated plots were split across `plots/` and `data/plots/` with no single source of truth; `requirements-dev.txt` was a 136-line raw `pip freeze` dump made redundant by `pyproject.toml`'s `[dependency-groups]` (added in ISSUE-010); `sanity_check.py` was an orphaned Week-1 environment check superseded by the real test suite; and `README.md` was 2 lines with no install/run/test instructions.
+- **Proposed fix**: Drop the false `models/*.pkl` gitignore rule; untrack the stray pytest cache directory; merge `data/plots/` into `plots/`; delete `requirements-dev.txt` and `sanity_check.py`; rewrite `README.md` with a real quickstart linking `DESIGN.md`/`CONTEXT.md`/`docs/adr/`/`ISSUES.md`.
+- **Method**: Edited `.gitignore` to remove the `models/*.pkl` line. Ran `git rm -r --cached pytest-cache-files-skjyc6kr/`. Ran `git mv` on all 6 files from `data/plots/` into `plots/`. Ran `git rm requirements-dev.txt sanity_check.py`. Rewrote `README.md` with install/run/test sections and links to the other docs. Verified no Python code referenced either plots directory before merging, and no other file referenced `sanity_check.py`, before deleting.
+- **Result**: RESOLVED — confirmed via `git status`/`git ls-files` that the moves/deletes match the plan, and `pytest` (36 passed, 1 slow deselected) still passes against `.venv-1` (Python 3.11.15) after the changes.
+- **Tags**: #hygiene #gitignore #docs #tooling #architecture-review
