@@ -33,9 +33,11 @@ log = logging.getLogger(__name__)
 
 # -- Model directory ----------------------------------------------------------
 # Resolve relative to this file so the app works from any cwd
-_APP_DIR   = Path(__file__).parent
-_MODEL_DIR = _APP_DIR.parent / 'models'
+_APP_DIR    = Path(__file__).parent
+_MODEL_DIR  = _APP_DIR.parent / 'models'
 _STATIC_DIR = _APP_DIR / 'static'
+_SAMPLE_DIR = _APP_DIR.parent / 'data' / 'sample_replays'
+_DEMO_PROFILE_ID = 3134896  # Hercules's AoE2 profile ID
 
 # -- App state (populated at startup) -----------------------------------------
 _state: dict = {
@@ -213,6 +215,60 @@ async def analyze(
                 os.unlink(tmp_path)
             except OSError:
                 pass
+
+
+# -- Demo endpoint ------------------------------------------------------------
+@app.get('/demo', summary='Run the bundled sample replay and return coaching')
+def demo(
+    top_n: int = Query(
+        default=5,
+        ge=1,
+        le=10,
+        description='Number of coaching recommendations to return (1-10)',
+    ),
+):
+    """
+    Runs the bundled sample replay (Hercules's game) through the full pipeline
+    and returns a coaching report. Useful for visitors without a replay file.
+    """
+    if not _state['ready']:
+        raise HTTPException(
+            status_code=503,
+            detail='Model not loaded -- check /health for details',
+        )
+
+    # Find the first .aoe2record in the sample dir
+    sample_files = list(_SAMPLE_DIR.glob('*.aoe2record'))
+    if not sample_files:
+        raise HTTPException(
+            status_code=500,
+            detail='No sample replay found on server.',
+        )
+    sample_path = sample_files[0]
+
+    log.info('Demo request -- using %s  profile_id=%s', sample_path.name, _DEMO_PROFILE_ID)
+
+    result = run_pipeline(
+        filepath=str(sample_path),
+        model=_state['model'],
+        distributions=_state['distributions'],
+        profile_id=_DEMO_PROFILE_ID,
+        top_n=top_n,
+    )
+
+    if result.get('status') == 'error':
+        raise HTTPException(
+            status_code=422,
+            detail={
+                'message': 'Failed to process demo replay',
+                'error':   result.get('error'),
+            },
+        )
+
+    result['filename'] = sample_path.name
+    result['is_demo'] = True
+    result.pop('filepath', None)
+    return result
 
 
 # -- Static frontend ----------------------------------------------------------

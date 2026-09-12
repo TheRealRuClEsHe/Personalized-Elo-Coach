@@ -531,6 +531,12 @@
     </div>
 
     <button id="analyze-btn" disabled>Analyze Replay</button>
+
+    <div style="text-align:center; margin-top:14px;">
+      <button id="demo-btn" style="background:none; border:none; color:var(--text-muted); font-size:0.88rem; cursor:pointer; text-decoration:underline; padding:4px 8px; transition:color 0.2s;">
+        🎮 No replay? Try a demo from one of my games
+      </button>
+    </div>
   </div>
 
   <!-- Error display -->
@@ -792,6 +798,18 @@ function hideResults() {
 function renderResults(data) {
   const resultsEl = document.getElementById('results');
 
+  // Demo banner
+  const existingBanner = document.getElementById('demo-banner');
+  if (existingBanner) existingBanner.remove();
+  if (data.is_demo) {
+    const banner = document.createElement('div');
+    banner.id = 'demo-banner';
+    banner.style.cssText = 'background:rgba(79,124,255,0.10);border:1px solid var(--accent-dim);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:0.88rem;color:var(--text-muted);text-align:center;';
+    const eloStr = data.my_elo != null ? ` (Elo ${Math.round(data.my_elo)})` : '';
+    banner.innerHTML = `🎮 <strong style="color:var(--text);">Demo mode</strong> — You're watching a real game by <strong style="color:var(--text);">TheRealRuClEsHe</strong>${eloStr}. <a href="#" onclick="document.getElementById('file-input').click();return false;" style="color:var(--accent);text-decoration:none;font-weight:600;">Upload your own replay</a> to get coaching tailored to you.`;
+    resultsEl.insertAdjacentElement('beforebegin', banner);
+  }
+
   // Filename
   document.getElementById('res-filename').textContent = data.filename || '';
 
@@ -1048,6 +1066,35 @@ function escHtml(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+// ── Demo replay ───────────────────────────────────────────────────────────────
+document.getElementById('demo-btn').addEventListener('click', async () => {
+  const topN = parseInt(document.getElementById('top-n').value) || 5;
+  setLoading(true);
+  clearError();
+  hideResults();
+
+  try {
+    const resp = await fetch(`/demo?top_n=${topN}`);
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      const detail = data.detail;
+      const msg = typeof detail === 'object'
+        ? (detail.error || detail.message || JSON.stringify(detail))
+        : String(detail || 'Unknown error');
+      showError(`Error ${resp.status}: ${msg}`);
+      return;
+    }
+
+    gtag('event', 'demo_analyzed', { num_recs: (data.recommendations || []).length });
+    renderResults(data);
+  } catch (err) {
+    showError('Network error — is the server running? ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+});
 </script>
 </body>
 </html>

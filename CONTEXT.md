@@ -23,3 +23,10 @@ One measurement expressed as coached player minus opponent. Negative is better
 for timings, positive is better for counts. The model is trained on these, never
 on raw per-player values.
 _Avoid_: feature, diff, differential
+
+**Demo replay**:
+A bundled `.aoe2record` file shipped with the server, analyzed live through the
+full pipeline when a visitor has no replay of their own. The coached player is
+always the creator (TheRealRuClEsHe, profile ID 3134896). Triggers only on
+explicit user action, never on page load.
+_Avoid_: sample, example, default replay
