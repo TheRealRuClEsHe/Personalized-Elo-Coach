@@ -705,18 +705,41 @@ dropZone.addEventListener('drop', (e) => {
   if (file) setFile(file);
 });
 
+// ── Top-N live update ─────────────────────────────────────────────────────────
+// The backend always returns up to MAX_TOP_N recommendations, sorted by
+// priority. Changing the "Top" field re-slices the cached result client-side
+// instead of re-fetching, so the list updates immediately as you type.
+const MAX_TOP_N = 10;
+let _lastFullData = null;
+
+function clampTopN(raw) {
+  const n = parseInt(raw);
+  if (!Number.isFinite(n)) return 5;
+  return Math.min(MAX_TOP_N, Math.max(1, n));
+}
+
+function applyTopN() {
+  if (!_lastFullData) return;
+  const topN = clampTopN(document.getElementById('top-n').value);
+  renderResults({
+    ..._lastFullData,
+    recommendations: (_lastFullData.recommendations || []).slice(0, topN),
+  });
+}
+
+document.getElementById('top-n').addEventListener('input', applyTopN);
+
 // ── Analyze ──────────────────────────────────────────────────────────────────
 analyzeBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
 
   const profileIdEl = document.getElementById('profile-id');
   const profileId = profileIdEl ? profileIdEl.value.trim() : '';
-  const topN      = parseInt(document.getElementById('top-n').value) || 5;
 
   const formData = new FormData();
   formData.append('file', selectedFile);
 
-  let url = `/analyze?top_n=${topN}`;
+  let url = `/analyze?top_n=${MAX_TOP_N}`;
   if (profileId) url += `&profile_id=${profileId}`;
 
   setLoading(true);
@@ -749,14 +772,15 @@ analyzeBtn.addEventListener('click', async () => {
       file_size_kb:    Math.round(selectedFile.size / 1024),
       processing_ms:   processingMs,
       win_probability: data.win_probability ?? null,
-      num_recs:        (data.recommendations || []).length,
+      num_recs:        Math.min((data.recommendations || []).length, clampTopN(document.getElementById('top-n').value)),
     });
 
     // If no profile_id was given, show player selector instead of results
     if (!profileId && data.players && data.players.length === 2) {
       showPlayerSelector(data.players);
     } else {
-      renderResults(data);
+      _lastFullData = data;
+      applyTopN();
     }
 
     // Track time spent reading results (fires when user leaves/navigates away)
@@ -934,10 +958,9 @@ async function selectPlayer(profileId) {
   if (profileIdInput) profileIdInput.value = profileId;
 
   if (!selectedFile) return;
-  const topN = parseInt(document.getElementById('top-n').value) || 5;
   const formData = new FormData();
   formData.append('file', selectedFile);
-  const url = `/analyze?top_n=${topN}&profile_id=${profileId}`;
+  const url = `/analyze?top_n=${MAX_TOP_N}&profile_id=${profileId}`;
 
   setLoading(true);
   clearError();
@@ -953,7 +976,8 @@ async function selectPlayer(profileId) {
       showError(`Error ${resp.status}: ${msg}`);
       return;
     }
-    renderResults(data);
+    _lastFullData = data;
+    applyTopN();
   } catch (err) {
     showError('Network error — ' + err.message);
   } finally {
@@ -1069,13 +1093,12 @@ function escHtml(str) {
 
 // ── Demo replay ───────────────────────────────────────────────────────────────
 document.getElementById('demo-btn').addEventListener('click', async () => {
-  const topN = parseInt(document.getElementById('top-n').value) || 5;
   setLoading(true);
   clearError();
   hideResults();
 
   try {
-    const resp = await fetch(`/demo?top_n=${topN}`);
+    const resp = await fetch(`/demo?top_n=${MAX_TOP_N}`);
     const data = await resp.json();
 
     if (!resp.ok) {
@@ -1087,8 +1110,9 @@ document.getElementById('demo-btn').addEventListener('click', async () => {
       return;
     }
 
-    gtag('event', 'demo_analyzed', { num_recs: (data.recommendations || []).length });
-    renderResults(data);
+    _lastFullData = data;
+    applyTopN();
+    gtag('event', 'demo_analyzed', { num_recs: Math.min((data.recommendations || []).length, clampTopN(document.getElementById('top-n').value)) });
   } catch (err) {
     showError('Network error — is the server running? ' + err.message);
   } finally {
