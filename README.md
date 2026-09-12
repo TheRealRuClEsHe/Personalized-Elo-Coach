@@ -1,6 +1,6 @@
 # EloCoach
 
-## EloCoach parses an `.aoe2record` replay, measures 70 in-game decisions as differences between the two players, runs them through a trained XGBoost win-probability model, and returns the coaching points where the model says the decision matters *and* the player is measurably behind. ##
+### EloCoach parses an `.aoe2record` replay, measures 70 in-game decisions as differences between the two players, runs them through a trained XGBoost win-probability model, and returns the coaching points where the model says the decision matters *and* the player is measurably behind. ###
 
 🔗 **[Live demo](https://personalized-elo-coach.onrender.com)** — free tier, first request may take ~30s to wake.
 
