@@ -18,7 +18,7 @@ EloCoach parses an `.aoe2record` replay, measures 70 in-game decisions as differ
 
 ## About this project
 
-I'm a ~1800 Elo Age of Empires II player. Tools like Capture Age and AoEInsight are excellent at surfacing *what happened* in a game — villager idle time, APM, unit counts — but none of them tell a player *which* of those numbers actually cost them the game, or what to do about it.
+I'm a ~1800 Elo Age of Empires II player. Tools like Capture Age and AoE2Insight are excellent at surfacing *what happened* in a game — villager idle time, APM, unit counts — but none of them tell a player *which* of those numbers actually cost them the game, or what to do about it.
 
 EloCoach is my attempt to close that gap: a personalized coaching tool for the whole Elo spectrum, not just top-level players or total beginners, built to help the community as a whole get better at reading their own games and reach new heights in their competitive journey.
 
