@@ -10,8 +10,8 @@ EloCoach parses an `.aoe2record` replay, measures 70 in-game decisions as differ
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
 
-<img width="1080" height="670" alt="elocoach-personalized-coaching-recommendation-tool-no-v0-4ole8fh6ph5h1" src="https://github.com/user-attachments/assets/43b91663-7201-4026-acc9-b35b12559ac4" />
 <img width="1080" height="754" alt="elocoach-personalized-coaching-recommendation-tool-no-v0-9zwapv10ph5h1" src="https://github.com/user-attachments/assets/2c381df1-851c-49d5-b64e-1c73a373bf5f" />
+<img width="1080" height="670" alt="elocoach-personalized-coaching-recommendation-tool-no-v0-4ole8fh6ph5h1" src="https://github.com/user-attachments/assets/43b91663-7201-4026-acc9-b35b12559ac4" />
 
 
 ---
