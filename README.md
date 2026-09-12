@@ -18,13 +18,13 @@ EloCoach parses an `.aoe2record` replay, measures 70 in-game decisions as differ
 
 ## About this project
 
-I'm a ~1800 Elo Age of Empires II player. Tools like Capture Age and AoE2Insight are excellent at surfacing *what happened* in a game — villager idle time, APM, unit counts — but none of them tell a player *which* of those numbers actually cost them the game, or what to do about it.
+I'm a ~1800 Elo Age of Empires II player. Tools like Capture Age and AoE2Insight are excellent at surfacing *what happened* in a game, villager idle time, APM, unit counts, but none of them tell a player *which* of those numbers actually cost them the game, or what to do about it.
 
 EloCoach is my attempt to close that gap: a personalized coaching tool for the whole Elo spectrum, not just top-level players or total beginners, built to help the community as a whole get better at reading their own games and reach new heights in their competitive journey.
 
 ## The problem
 
-Post-game screens tell a player *what happened* — villager counts, resources collected, army size. They don't say which of those numbers actually cost the game, or which are within a normal range for that player's level. Coaching content is generic; personal coaching is expensive.
+Post-game screens tell a player *what happened* : villager counts, resources collected, army size. They don't say which of those numbers actually cost the game, or which are within a normal range for that player's level. Coaching content is generic; personal coaching is expensive.
 
 EloCoach answers a narrower question: **given how this specific game was played, which decisions had the most influence on the outcome, and which of those is this player worst at?**
 
@@ -40,7 +40,7 @@ EloCoach answers a narrower question: **given how this specific game was played,
                                     top 3 coaching recommendations
 ```
 
-**Delta features, not raw stats.** Every feature is *coached player minus opponent* — Feudal Age timing difference, villager-idle-time difference, and so on. Models trained on individual player stats scored below 0.60 AUC; game outcomes depend on relative performance, not absolute numbers. Switching to deltas is what made the model work.
+**Delta features, not raw stats.** Every feature is *coached player minus opponent* : Feudal Age timing difference, villager-idle-time difference, and so on. Models trained on individual player stats scored below 0.60 AUC; game outcomes depend on relative performance, not absolute numbers. Switching to deltas is what made the model work.
 
 **Ranking by importance × weakness.** A recommendation surfaces only when both conditions hold: SHAP says the feature drives win probability, *and* the player sits in a weak percentile for it. A player who is already top-decile at Castle Age timing doesn't get told to click up faster.
 
