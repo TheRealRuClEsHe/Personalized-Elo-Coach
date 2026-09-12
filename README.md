@@ -16,6 +16,12 @@ EloCoach parses an `.aoe2record` replay, measures 70 in-game decisions as differ
 
 ---
 
+## About this project
+
+I'm a ~1800 Elo Age of Empires II player. Tools like Capture Age and AoEInsight are excellent at surfacing *what happened* in a game — villager idle time, APM, unit counts — but none of them tell a player *which* of those numbers actually cost them the game, or what to do about it.
+
+EloCoach is my attempt to close that gap: a personalized coaching tool for the whole Elo spectrum, not just top-level players or total beginners, built to help the community as a whole get better at reading their own games and reach new heights in their competitive journey.
+
 ## The problem
 
 Post-game screens tell a player *what happened* — villager counts, resources collected, army size. They don't say which of those numbers actually cost the game, or which are within a normal range for that player's level. Coaching content is generic; personal coaching is expensive.
@@ -37,6 +43,40 @@ EloCoach answers a narrower question: **given how this specific game was played,
 **Delta features, not raw stats.** Every feature is *coached player minus opponent* — Feudal Age timing difference, villager-idle-time difference, and so on. Models trained on individual player stats scored below 0.60 AUC; game outcomes depend on relative performance, not absolute numbers. Switching to deltas is what made the model work.
 
 **Ranking by importance × weakness.** A recommendation surfaces only when both conditions hold: SHAP says the feature drives win probability, *and* the player sits in a weak percentile for it. A player who is already top-decile at Castle Age timing doesn't get told to click up faster.
+
+## Example output
+
+A real response from `GET /demo`, trimmed to the top 2 of the ranked recommendations:
+
+```json
+{
+  "actual_result": 0,
+  "win_probability": 0.187,
+  "my_elo": 1893,
+  "opp_elo": 1895,
+  "duration_min": 45.45,
+  "recommendations": [
+    {
+      "rank": 1,
+      "feature": "town_watch_min",
+      "value": 10.54,
+      "percentile": 82.4,
+      "direction": "negative",
+      "message": "You research Town Watch late. This gives map awareness and protects your villagers from early raiding — worth researching in Feudal when scouting picks up."
+    },
+    {
+      "rank": 2,
+      "feature": "villagers_imperial_age",
+      "value": -14,
+      "percentile": 14.2,
+      "direction": "positive",
+      "message": "Fewer villagers in Imperial Age than your opponent. Keep TC always producing — villager lead in late game means faster unit replenishment and stronger eco recovery after fights."
+    }
+  ]
+}
+```
+
+`value` is the raw delta (coached player minus opponent, see [`CONTEXT.md`](CONTEXT.md)). `percentile` ranks that delta against the training population — `82.4` on a *negative* (timing) feature means 82% of players at this Elo researched Town Watch faster than this player did.
 
 ## Results
 
